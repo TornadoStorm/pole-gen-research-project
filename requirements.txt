@@ -8,3 +8,4 @@ plyfile
 ipykernel
 requests
 open3d
+matplotlib

@@ -23,7 +23,7 @@ def train_classification(
     outf: str = "cls",
     model: str = "",
     feature_transform: bool = False,
-):
+) -> PointNetCls:
     blue = lambda x: "\033[94m" + x + "\033[0m"
 
     manualSeed = random.randint(1, 10000)  # fix seed
@@ -136,3 +136,5 @@ def train_classification(
         total_testset += points.size()[0]
 
     print("final accuracy {}".format(total_correct / float(total_testset)))
+
+    return classifier
