@@ -1,0 +1,10 @@
+torch
+torchvision
+torchaudio
+tqdm
+numpy
+pandas
+plyfile
+ipykernel
+requests
+open3d
