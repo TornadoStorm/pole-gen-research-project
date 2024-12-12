@@ -15,7 +15,7 @@ class PointCloudDataset(data.Dataset):
     file_paths: List[str]
     """List of file paths to the source files."""
 
-    def __init__( self, file_paths: List[str] = []) -> None:
+    def __init__(self, file_paths: List[str] = []) -> None:
         self.file_paths = file_paths
 
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:

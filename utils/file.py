@@ -1,12 +1,13 @@
 import hashlib
 import os
+import struct
+from typing import List, Tuple
 
 import numpy as np
-import requests
-from tqdm import tqdm
-from typing import List, Tuple
-import struct
 import open3d as o3d
+import requests
+from m2p.convert import meshToPointCloud
+from tqdm import tqdm
 
 
 def checksum(file_path: str, algorithm="sha256") -> str:
@@ -57,29 +58,37 @@ def check_off_file(file_path: str) -> None:
             first_line_remainder = first_line[3:].strip()
             f.writelines(["OFF\n", f"{first_line_remainder}\n"] + remaining_lines)
 
-def save_points(file_path: str, points: List[Tuple[float, float, float]], label: int) -> None:
-    with open(file_path, "w") as f:
-        f.write(struct.pack('i', label))
-        f.write(struct.pack('i', len(points)))
+
+def save_points(
+    file_path: str, points: List[Tuple[float, float, float]], label: int
+) -> None:
+    with open(file_path, "wb") as f:
+        f.write(struct.pack("i", label))
+        f.write(struct.pack("i", len(points)))
         for point in points:
-            f.write(struct.pack('fff', *point))
+            f.write(struct.pack("fff", *point))
+
 
 def read_points(file_path: str) -> Tuple[int, int, List[Tuple[float, float, float]]]:
-    with open(file_path, "r") as f:
-        label = struct.unpack('i', f.read(4))
-        num_points = struct.unpack('i', f.read(4))
+    with open(file_path, "rb") as f:
+        label = struct.unpack("i", f.read(4))
+        num_points = struct.unpack("i", f.read(4))
         points = []
         for i in range(num_points):
-            point = struct.unpack('fff', f.read(12))
+            point = struct.unpack("fff", f.read(12))
             points.append(point)
         return label, num_points, points
-    
+
+
 def read_points_header(file_path: str) -> Tuple[int, int]:
-    with open(file_path, "r") as f:
-        label = struct.unpack('i', f.read(4))
-        num_points = struct.unpack('i', f.read(4))
+    with open(file_path, "rb") as f:
+        label = struct.unpack("i", f.read(4))
+        num_points = struct.unpack("i", f.read(4))
         return label, num_points
-    
+
+
 def mesh_to_points(file_path: str, npoints: int) -> List[Tuple[float, float, float]]:
-    pc = o3d.io.read_triangle_mesh(file_path).sample_points_uniformly(number_of_points=npoints)
+    pc = o3d.io.read_triangle_mesh(file_path).sample_points_poisson_disk(
+        number_of_points=npoints, init_factor=5
+    )
     return np.asarray(pc.points)
