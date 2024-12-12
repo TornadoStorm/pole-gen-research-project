@@ -106,7 +106,10 @@ class ModelNetDataset(data.Dataset):
 
         pts = np.asarray(mesh.vertices)
         np.random.seed(self.seed + index)
-        choice = np.random.choice(len(pts), self.npoints, replace=True)
+        # TODO: Figure out how to add more points
+        choice = np.random.choice(
+            len(pts), self.npoints, replace=(self.npoints > len(pts))
+        )
         point_set = pts[choice, :]
 
         point_set = point_set - np.expand_dims(np.mean(point_set, axis=0), 0)  # center
