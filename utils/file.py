@@ -42,3 +42,18 @@ def get_folder_size(folder):
             fp = os.path.join(dirpath, f)
             total_size += os.path.getsize(fp)
     return total_size
+
+
+def check_off_file(file_path: str) -> None:
+    with open(file_path, "r") as f:
+        first_line = f.readline().strip()
+        if first_line == "OFF":
+            return
+
+        remaining_lines = f.readlines()
+
+    with open(file_path, "w") as f:
+        if first_line.startswith("OFF") and len(first_line) > 3:
+            print("Fixing OFF file format for", file_path)
+            first_line_remainder = first_line[3:].strip()
+            f.writelines(["OFF\n", f"{first_line_remainder}\n"] + remaining_lines)

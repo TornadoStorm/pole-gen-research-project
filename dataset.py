@@ -10,6 +10,8 @@ import torch
 import torch.utils.data as data
 from m2p.convert import meshToPointCloud
 
+from utils.file import check_off_file
+
 # PCArray = np.ndarray[Any, np.dtype[np.float32]]
 
 
@@ -37,21 +39,6 @@ from m2p.convert import meshToPointCloud
 #     def augment(self, point_set: PCArray, seed: Any) -> None:
 #         np.random.seed(seed)
 #         point_set += np.random.normal(0, self.amount, size=point_set.shape)
-
-
-def check_off_file(file_path: str) -> None:
-    with open(file_path, "r") as f:
-        first_line = f.readline().strip()
-        if first_line == "OFF":
-            return
-
-        remaining_lines = f.readlines()
-
-    with open(file_path, "w") as f:
-        if first_line.startswith("OFF") and len(first_line) > 3:
-            print("Fixing OFF file format for", file_path)
-            first_line_remainder = first_line[3:].strip()
-            f.writelines(["OFF\n", f"{first_line_remainder}\n"] + remaining_lines)
 
 
 # TODO: Augmentations (only for training data)
@@ -99,13 +86,15 @@ class ModelNetDataset(data.Dataset):
                 check_off_file(file_path)
 
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
-        file_path, cls = self.files[index]
-        mesh = o3d.io.read_triangle_mesh(file_path)
+        file_path, label = self.files[index]
 
-        if len(mesh.vertices) == 0:
-            raise ValueError(f"Empty mesh found at {file_path}")
+        pc = o3d.io.read_triangle_mesh(file_path).sample_points_uniformly(
+            number_of_points=self.npoints
+        )
+        point_set = np.asarray(pc.points)
+        del pc
 
-        point_set = meshToPointCloud(mesh.vertices, mesh.triangles, self.npoints)
+        # point_set = meshToPointCloud(mesh.vertices, mesh.triangles, self.npoints)
 
         # pts = np.asarray(mesh.vertices)
         # np.random.seed(self.seed + index)
@@ -120,8 +109,46 @@ class ModelNetDataset(data.Dataset):
         point_set = point_set / dist  # scale
 
         point_set_tensor = torch.from_numpy(point_set.astype(np.float32))
-        cls_tensor = torch.from_numpy(np.array([cls]).astype(np.int64))
-        return point_set_tensor, cls_tensor
+        label_tensor = torch.from_numpy(np.array([label]).astype(np.int64))
+        return point_set_tensor, label_tensor
 
     def __len__(self) -> int:
         return len(self.files)
+
+
+class PointCloudDataset(data.Dataset):
+    """Dataset for point cloud data."""
+
+    files: List[Tuple[str, int]]
+    """List of file paths to the source files paired with their class index."""
+    classes: List[str]
+    """List of class names."""
+
+    def __init__(
+        self,
+        file_paths: List[str] = [],
+        labels: List[int] = [],
+    ):
+        if len(file_paths) != len(labels):
+            raise ValueError(
+                "Number of file paths and labels must be equal. "
+                f"Found {len(file_paths)} file paths and {len(labels)} labels"
+            )
+
+        self.files = list(zip(file_paths, labels))
+
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        file_path, label = self.files[index]
+        point_cloud = o3d.io.read_point_cloud(file_path)
+
+        if len(point_cloud.points) == 0:
+            raise ValueError(f"Empty point cloud found at {file_path}")
+
+        point_set_tensor = torch.from_numpy(
+            np.asarray(point_cloud.points).astype(np.float32)
+        )
+        label_tensor = torch.from_numpy(np.array([label]).astype(np.int64))
+        return point_set_tensor, label_tensor
+
+    def __len__(self) -> int:
+        return len(self.file_paths)
