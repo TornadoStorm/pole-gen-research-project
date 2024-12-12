@@ -8,6 +8,7 @@ import numpy as np
 import open3d as o3d
 import torch
 import torch.utils.data as data
+from m2p.convert import meshToPointCloud
 
 # PCArray = np.ndarray[Any, np.dtype[np.float32]]
 
@@ -104,13 +105,15 @@ class ModelNetDataset(data.Dataset):
         if len(mesh.vertices) == 0:
             raise ValueError(f"Empty mesh found at {file_path}")
 
-        pts = np.asarray(mesh.vertices)
-        np.random.seed(self.seed + index)
-        # TODO: Figure out how to add more points
-        choice = np.random.choice(
-            len(pts), self.npoints, replace=(self.npoints > len(pts))
-        )
-        point_set = pts[choice, :]
+        point_set = meshToPointCloud(mesh.vertices, mesh.triangles, self.npoints)
+
+        # pts = np.asarray(mesh.vertices)
+        # np.random.seed(self.seed + index)
+        # # TODO: Figure out how to add more points
+        # choice = np.random.choice(
+        #     len(pts), self.npoints, replace=(self.npoints > len(pts))
+        # )
+        # point_set = pts[choice, :]
 
         point_set = point_set - np.expand_dims(np.mean(point_set, axis=0), 0)  # center
         dist = np.max(np.sqrt(np.sum(point_set**2, axis=1)), 0)
