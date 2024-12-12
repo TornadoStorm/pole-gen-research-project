@@ -1,21 +1,20 @@
 import hashlib
 import os
 
+import numpy as np
 import requests
 from tqdm import tqdm
+from typing import List, Tuple
+import struct
+import open3d as o3d
 
 
-def checksum(file_path, algorithm="sha256"):
+def checksum(file_path: str, algorithm="sha256") -> str:
     hash_func = hashlib.new(algorithm)
     with open(file_path, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
             hash_func.update(chunk)
     return hash_func.hexdigest()
-
-
-def get_download_size(url):
-    response = requests.head(url)
-    return int(response.headers.get("content-length", 0))
 
 
 def download_file(url, output_path):
@@ -57,3 +56,30 @@ def check_off_file(file_path: str) -> None:
             print("Fixing OFF file format for", file_path)
             first_line_remainder = first_line[3:].strip()
             f.writelines(["OFF\n", f"{first_line_remainder}\n"] + remaining_lines)
+
+def save_points(file_path: str, points: List[Tuple[float, float, float]], label: int) -> None:
+    with open(file_path, "w") as f:
+        f.write(struct.pack('i', label))
+        f.write(struct.pack('i', len(points)))
+        for point in points:
+            f.write(struct.pack('fff', *point))
+
+def read_points(file_path: str) -> Tuple[int, int, List[Tuple[float, float, float]]]:
+    with open(file_path, "r") as f:
+        label = struct.unpack('i', f.read(4))
+        num_points = struct.unpack('i', f.read(4))
+        points = []
+        for i in range(num_points):
+            point = struct.unpack('fff', f.read(12))
+            points.append(point)
+        return label, num_points, points
+    
+def read_points_header(file_path: str) -> Tuple[int, int]:
+    with open(file_path, "r") as f:
+        label = struct.unpack('i', f.read(4))
+        num_points = struct.unpack('i', f.read(4))
+        return label, num_points
+    
+def mesh_to_points(file_path: str, npoints: int) -> List[Tuple[float, float, float]]:
+    pc = o3d.io.read_triangle_mesh(file_path).sample_points_uniformly(number_of_points=npoints)
+    return np.asarray(pc.points)
