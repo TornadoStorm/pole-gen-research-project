@@ -101,7 +101,6 @@ class ModelNet40(DataSource):
                         # Annoying but we need to do this to fix some OFF files
                         mesh = o3d.io.read_triangle_mesh(file_path)
                         pcd = mesh.sample_points_uniformly(number_of_points=npoints)
-                        print(pcd)
                         pcd_center = pcd.get_center()
                         pcd.translate(-pcd_center)  # Center the point cloud
                         max_distance = max(pcd.get_max_bound() - pcd.get_min_bound())

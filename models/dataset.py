@@ -7,7 +7,7 @@ import numpy as np
 import open3d as o3d
 import torch
 import torch.utils.data as data
-from utils.file import read_points
+
 
 class PointCloudDataset(data.Dataset):
     """Dataset for point cloud data."""
@@ -19,10 +19,17 @@ class PointCloudDataset(data.Dataset):
         self.file_paths = file_paths
 
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        # Extract points from file
         file_path = self.file_paths[index]
-        label, num_points, points = read_points(file_path)
-        point_set_tensor = torch.from_numpy(np.asarray(points).astype(np.float32))
+        pc = o3d.io.read_point_cloud(file_path)
+        point_set_tensor = torch.from_numpy(np.asarray(pc.points).astype(np.float32))
+
+        # Extract label from filename
+        filename = os.path.basename(file_path)
+        label_str = filename.split("_")[0]
+        label = int(label_str)
         label_tensor = torch.from_numpy(np.array([label]).astype(np.int64))
+
         return point_set_tensor, label_tensor
 
     def __len__(self) -> int:

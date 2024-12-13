@@ -49,41 +49,6 @@ def check_off_file(file_path: str) -> None:
             f.writelines(["OFF\n", f"{first_line_remainder}\n"] + remaining_lines)
 
 
-def save_points(
-    file_path: str, points: List[Tuple[float, float, float]], label: int
-) -> None:
-    with open(file_path, "wb") as f:
-        f.write(struct.pack("i", label))
-        f.write(struct.pack("i", len(points)))
-        for point in points:
-            f.write(struct.pack("fff", *point))
-
-
-def read_points(file_path: str) -> Tuple[int, int, List[Tuple[float, float, float]]]:
-    with open(file_path, "rb") as f:
-        label = struct.unpack("i", f.read(4))
-        num_points = struct.unpack("i", f.read(4))
-        points = []
-        for i in range(num_points):
-            point = struct.unpack("fff", f.read(12))
-            points.append(point)
-        return label, num_points, points
-
-
-def read_points_header(file_path: str) -> Tuple[int, int]:
-    with open(file_path, "rb") as f:
-        label = struct.unpack("i", f.read(4))
-        num_points = struct.unpack("i", f.read(4))
-        return label, num_points
-
-
-def mesh_to_points(file_path: str, npoints: int) -> List[Tuple[float, float, float]]:
-    pc = o3d.io.read_triangle_mesh(file_path).sample_points_poisson_disk(
-        number_of_points=npoints, init_factor=5
-    )
-    return np.asarray(pc.points)
-
-
 def read_off(
     file: IO[bytes],
 ) -> Tuple[List[Tuple[float, float, float]], List[List[int]]]:
