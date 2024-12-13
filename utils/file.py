@@ -112,16 +112,14 @@ def read_off(
 
     n_verts, n_faces, n_edges = map(int, first_line.split())
 
+    lines = [line.strip().decode("utf-8") for line in file.readlines()]
+
     # Read the vertices
-    for _ in range(n_verts):
-        vertex = tuple(map(float, file.readline().strip().decode("utf-8").split()))
-        vertices.append(vertex)
+    vertices = [tuple(map(float, lines[i].split())) for i in range(n_verts)]
 
     # Read the faces
-    for _ in range(n_faces):
-        line_split = file.readline().strip().decode("utf-8").split()
-        face_count = int(line_split[0])
-        face = list(map(int, line_split[1 : 1 + face_count]))
-        faces.append(face)
+    faces = [
+        list(map(int, lines[i].split()[1:])) for i in range(n_verts, n_verts + n_faces)
+    ]
 
     return vertices, faces

@@ -17,6 +17,7 @@ from .model import PointNetCls, feature_transform_regularizer
 def train_classification(
     train_dataset: torch.utils.data.Dataset,
     test_dataset: torch.utils.data.Dataset,
+    k: int = 40,
     batchSize: int = 32,
     workers: int = 4,
     epochs: int = 25,
@@ -42,14 +43,12 @@ def train_classification(
         num_workers=workers,
     )
 
-    num_classes = len(train_dataset.classes)
-
     try:
         os.makedirs(outf)
     except OSError:
         pass
 
-    classifier = PointNetCls(k=num_classes, feature_transform=feature_transform)
+    classifier = PointNetCls(k=k, feature_transform=feature_transform)
 
     # Decide on whether to use GPU or CPU
     can_cuda = torch.cuda.is_available()

@@ -1,3 +1,4 @@
+import cProfile
 import os
 import tempfile
 import zipfile
@@ -82,6 +83,10 @@ class ModelNet40(DataSource):
                     i += 1
                     data_count = len(namelist) - i
                     print(f"Found {len(classes)} classes.")
+
+                    pr = cProfile.Profile()
+                    pr.enable()
+
                     with tqdm(desc="Processing data", total=data_count) as pbar:
                         for j in range(data_count):
                             name = namelist[i + j]
@@ -91,7 +96,11 @@ class ModelNet40(DataSource):
 
                             with zip_ref.open(name) as file:
                                 verts, faces = utils.file.read_off(file)
-                                points = meshToPointCloud(verts, faces, npoints)
+                                # points = meshToPointCloud(verts, faces, npoints)
+                                indices = np.random.choice(
+                                    len(verts), npoints, replace=True
+                                )
+                                points = np.array(verts)[indices]
                                 points = points - np.expand_dims(
                                     np.mean(points, axis=0), 0
                                 )  # center
@@ -116,6 +125,10 @@ class ModelNet40(DataSource):
                                 target_list.append(o_path)
 
                             pbar.update(1)
+                            if pbar.n == 123:
+                                pr.disable()
+                                pr.dump_stats("profile.prof")
+                                print("Profiling complete.")
                     break
 
         return classes, PointCloudDataset(train_files), PointCloudDataset(test_files)

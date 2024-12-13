@@ -174,3 +174,5 @@ cls/
 seg/
 
 data/
+
+*.prof
