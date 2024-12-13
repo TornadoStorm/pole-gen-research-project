@@ -18,6 +18,7 @@ def train_segmentation(
     train_dataset: torch.utils.data.Dataset,
     test_dataset: torch.utils.data.Dataset,
     class_choice: int,
+    k: int,
     batchSize: int = 32,
     workers: int = 4,
     epochs: int = 25,
@@ -38,8 +39,6 @@ def train_segmentation(
         test_dataset, batch_size=batchSize, shuffle=True, num_workers=workers
     )
 
-    num_classes = len(train_dataset.classes)
-
     try:
         os.makedirs(outf)
     except OSError:
@@ -47,7 +46,7 @@ def train_segmentation(
 
     blue = lambda x: "\033[94m" + x + "\033[0m"
 
-    classifier = PointNetDenseCls(k=num_classes, feature_transform=feature_transform)
+    classifier = PointNetDenseCls(k=k, feature_transform=feature_transform)
 
     if model != "":
         classifier.load_state_dict(torch.load(model))
@@ -66,7 +65,7 @@ def train_segmentation(
             optimizer.zero_grad()
             classifier = classifier.train()
             pred, trans, trans_feat = classifier(points)
-            pred = pred.view(-1, num_classes)
+            pred = pred.view(-1, k)
             target = target.view(-1, 1)[:, 0] - 1
             # print(pred.size(), target.size())
             loss = F.nll_loss(pred, target)
@@ -94,7 +93,7 @@ def train_segmentation(
                 points, target = points.cuda(), target.cuda()
                 classifier = classifier.eval()
                 pred, _, _ = classifier(points)
-                pred = pred.view(-1, num_classes)
+                pred = pred.view(-1, k)
                 target = target.view(-1, 1)[:, 0] - 1
                 loss = F.nll_loss(pred, target)
                 pred_choice = pred.data.max(1)[1]
@@ -132,7 +131,7 @@ def train_segmentation(
         target_np = target.cpu().data.numpy() - 1
 
         for shape_idx in range(target_np.shape[0]):
-            parts = range(num_classes)  # np.unique(target_np[shape_idx])
+            parts = range(k)  # np.unique(target_np[shape_idx])
             part_ious = []
             for part in parts:
                 I = np.sum(
