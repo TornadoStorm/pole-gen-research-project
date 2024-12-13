@@ -1,5 +1,4 @@
 import os
-import shutil
 import tempfile
 import zipfile
 from typing import List, Tuple
@@ -7,24 +6,21 @@ from typing import List, Tuple
 import numpy as np
 import torch.utils.data as data
 from m2p.convert import meshToPointCloud
+from tqdm import tqdm
 
 import utils.file
 from models.dataset import PointCloudDataset
 
 
 class DataSource:
-    url: str
-    name: str
-
     def download(self) -> Tuple[data.Dataset, data.Dataset]:
         pass
 
 
 # TODO: Augmentations for training data
 class ModelNet40(DataSource):
-    url = "http://modelnet.cs.princeton.edu/ModelNet40.zip"
-    name = "ModelNet40"
-    checksum = "42dc3e656932e387f554e25a4eb2cc0e1a1bd3ab54606e2a9eae444c60e536ac"
+    URL = "http://modelnet.cs.princeton.edu/ModelNet40.zip"
+    CHECKSUM = "42dc3e656932e387f554e25a4eb2cc0e1a1bd3ab54606e2a9eae444c60e536ac"
 
     @classmethod
     def download(
@@ -34,77 +30,92 @@ class ModelNet40(DataSource):
         test_outdir: str = "data/test",
     ) -> Tuple[data.Dataset, data.Dataset]:
         temp_dir = tempfile.gettempdir()
-        zip_path = os.path.join(temp_dir, cls.name + ".zip")
-        dataset_path = os.path.join(temp_dir, cls.name)
+        zip_path = os.path.join(temp_dir, "ModelNet40.zip")
 
-        if os.path.exists(zip_path) and utils.file.checksum(zip_path) == cls.checksum:
+        if os.path.exists(zip_path) and utils.file.checksum(zip_path) == cls.CHECKSUM:
             print("Zip already downloaded.")
         else:
-            utils.file.download_file(cls.url, zip_path)
+            utils.file.download_file(cls.URL, zip_path)
             print("Zip downloaded.")
 
-        if os.path.exists(dataset_path):
-            shutil.rmtree(dataset_path)
-
-        print("Extracting data...")
         with zipfile.ZipFile(zip_path, "r") as zip_ref:
-            zip_ref.extractall(dataset_path)
-            print("Data extracted.")
+            print("Creating dataset...")
 
-        dataset_root = dataset_path
-        while True:
-            listdir = os.listdir(dataset_root)
-            if len(listdir) > 0 and listdir[0].startswith("ModelNet"):
-                dataset_root = os.path.join(dataset_root, listdir[0])
-            else:
-                break
+            if not os.path.exists(train_outdir):
+                os.makedirs(train_outdir)
 
-        print("Creating dataset...")
+            if not os.path.exists(test_outdir):
+                os.makedirs(test_outdir)
 
-        classes = os.listdir(dataset_root)
+            train_files: List[str] = []
+            test_files: List[str] = []
 
-        if not os.path.exists(train_outdir):
-            os.makedirs(train_outdir)
+            classes: List[str] = []
+            class_index_map: dict[str, int] = {}
 
-        if not os.path.exists(test_outdir):
-            os.makedirs(test_outdir)
+            namelist = zip_ref.namelist()
+            i = 0
 
-        train_files: List[str] = []
-        test_files: List[str] = []
+            data_count = 0
 
-        for i in range(len(classes)):
-            class_name = classes[i]
-            for outdir, split, files in [
-                (train_outdir, "train", train_files),
-                (test_outdir, "test", test_files),
-            ]:
-                oudir_cls = os.path.join(outdir, class_name)
-                if not os.path.exists(oudir_cls):
-                    os.makedirs(oudir_cls)
+            # Collect classes
+            while True:
+                name = namelist[i]
+                names = name.split("/")
 
-                for fn in os.listdir(os.path.join(dataset_root, class_name, split)):
-                    from_path = os.path.join(dataset_root, class_name, split, fn)
-                    utils.file.check_off_file(from_path)
+                if len(names) <= 2:
+                    i += 1
+                    continue
+                elif names[-1] == "":
+                    # Directory
+                    last_folder = names[-2]
+                    if last_folder == "train" or last_folder == "test":
+                        i += 1
+                        continue
+                    # Class name
+                    label = last_folder
+                    class_index_map[label] = len(classes)
+                    classes.append(label)
+                    i += 1
+                    continue
+                else:
+                    i += 1
+                    data_count = len(namelist) - i
+                    print(f"Found {len(classes)} classes.")
+                    with tqdm(desc="Processing data", total=data_count) as pbar:
+                        for j in range(data_count):
+                            name = namelist[i + j]
+                            names = name.split("/")
+                            split = names[-2]
+                            label = names[-3]
 
-                    point_set = utils.file.mesh_to_points(
-                        file_path=from_path, npoints=npoints
-                    )
-                    point_set = point_set - np.expand_dims(
-                        np.mean(point_set, axis=0), 0
-                    )  # center
-                    dist = np.max(np.sqrt(np.sum(point_set**2, axis=1)), 0)
-                    point_set = point_set / dist  # scale
+                            with zip_ref.open(name) as file:
+                                verts, faces = utils.file.read_off(file)
+                                points = meshToPointCloud(verts, faces, npoints)
+                                points = points - np.expand_dims(
+                                    np.mean(points, axis=0), 0
+                                )  # center
+                                dist = np.max(np.sqrt(np.sum(points**2, axis=1)), 0)
+                                points = points / dist  # scale
 
-                    to_path = os.path.join(oudir_cls, f"{os.path.splitext(fn)[0]}.bin")
+                                if split == "train":
+                                    target_outdir = train_outdir
+                                    target_list = train_files
+                                else:
+                                    target_outdir = test_outdir
+                                    target_list = test_files
 
-                    utils.file.save_points(file_path=to_path, points=point_set, label=i)
+                                o_path = os.path.join(
+                                    target_outdir,
+                                    f"{os.path.splitext(os.path.basename(name))[0]}.bin",
+                                )
 
-                    files.append((to_path, i))
+                                utils.file.save_points(
+                                    o_path, points, class_index_map[label]
+                                )
+                                target_list.append(o_path)
 
-        print("Cleaning up...")
-
-        shutil.rmtree(dataset_path)
-
-        print("Done.")
+                            pbar.update(1)
+                    break
 
         return classes, PointCloudDataset(train_files), PointCloudDataset(test_files)

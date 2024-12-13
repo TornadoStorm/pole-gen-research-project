@@ -1,12 +1,11 @@
 import hashlib
 import os
 import struct
-from typing import List, Tuple
+from typing import IO, List, Tuple
 
 import numpy as np
 import open3d as o3d
 import requests
-from m2p.convert import meshToPointCloud
 from tqdm import tqdm
 
 
@@ -92,3 +91,37 @@ def mesh_to_points(file_path: str, npoints: int) -> List[Tuple[float, float, flo
         number_of_points=npoints, init_factor=5
     )
     return np.asarray(pc.points)
+
+
+def read_off(
+    file: IO[bytes],
+) -> Tuple[List[Tuple[float, float, float]], List[List[int]]]:
+    vertices: List[Tuple[float, float, float]] = []
+    faces: List[List[int]] = []
+
+    # Find the first line that is not "OFF"
+    first_line = ""
+    while True:
+        first_line = file.readline().strip().decode("utf-8")
+        if first_line != "OFF" and first_line != "":
+            break
+
+    # Odd bug with ModelNet40 dataset where they put the OFF on the same line as the 2nd line
+    if first_line.startswith("OFF") and len(first_line) > 3:
+        first_line = first_line[3:]
+
+    n_verts, n_faces, n_edges = map(int, first_line.split())
+
+    # Read the vertices
+    for _ in range(n_verts):
+        vertex = tuple(map(float, file.readline().strip().decode("utf-8").split()))
+        vertices.append(vertex)
+
+    # Read the faces
+    for _ in range(n_faces):
+        line_split = file.readline().strip().decode("utf-8").split()
+        face_count = int(line_split[0])
+        face = list(map(int, line_split[1 : 1 + face_count]))
+        faces.append(face)
+
+    return vertices, faces
