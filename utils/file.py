@@ -1,4 +1,3 @@
-import hashlib
 import os
 import struct
 from typing import IO, List, Tuple
@@ -7,14 +6,6 @@ import numpy as np
 import open3d as o3d
 import requests
 from tqdm import tqdm
-
-
-def checksum(file_path: str, algorithm="sha256") -> str:
-    hash_func = hashlib.new(algorithm)
-    with open(file_path, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_func.update(chunk)
-    return hash_func.hexdigest()
 
 
 def download_file(url, output_path):
@@ -53,7 +44,7 @@ def check_off_file(file_path: str) -> None:
 
     with open(file_path, "w") as f:
         if first_line.startswith("OFF") and len(first_line) > 3:
-            print("Fixing OFF file format for", file_path)
+            # print("Fixing OFF file:", file_path)
             first_line_remainder = first_line[3:].strip()
             f.writelines(["OFF\n", f"{first_line_remainder}\n"] + remaining_lines)
 
