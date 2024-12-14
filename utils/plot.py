@@ -15,9 +15,9 @@ def plot_points(points: List[Tuple[float, float, float]]):
         cmap="viridis",
         s=1,
     )
-    ax.set_xlim([-1.0, 1.0])
-    ax.set_ylim([-1.0, 1.0])
-    ax.set_zlim([-1.0, 1.0])
+    ax.set_xlim([-0.5, 0.5])
+    ax.set_ylim([-0.5, 0.5])
+    ax.set_zlim([-0.5, 0.5])
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_zticks([])
