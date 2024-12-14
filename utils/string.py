@@ -1,4 +1,8 @@
-def format_accuracy(accuracy: float) -> str:
+def format_accuracy(accuracy: float, color=True) -> str:
+    formatted_accuracy = f"{accuracy * 100:.2f}%"
+    if not color:
+        return formatted_accuracy
+
     COLOR_GRADIENT = [
         (0.6, (255, 0, 0)),
         (0.8, (255, 255, 0)),
@@ -20,5 +24,4 @@ def format_accuracy(accuracy: float) -> str:
         return (0, 255, 0)
 
     color = get_color(accuracy)
-    formatted_accuracy = f"{accuracy * 100:.2f}%"
     return f"\033[38;2;{color[0]};{color[1]};{color[2]}m{formatted_accuracy}\033[0m"

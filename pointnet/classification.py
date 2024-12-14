@@ -4,18 +4,20 @@ import os
 import random
 import warnings
 from collections import defaultdict
-from typing import List, Tuple
+from typing import List
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 import torch.nn.parallel
 import torch.optim as optim
 import torch.utils.data
-from tqdm import tqdm
+from matplotlib import pyplot as plt
+from tqdm.auto import tqdm
 
 from utils.string import format_accuracy
 
-from .model import PointNetCls, feature_transform_regularizer
+from .model import PointNetCls
 
 
 def train_classifier(
@@ -67,50 +69,101 @@ def train_classifier(
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
     classifier.cuda()
 
-    num_batch = len(train_dataset) / batchSize
+    num_batch = round(len(train_dataset) / batchSize)
 
-    for epoch in range(epochs):
-        for i, data in enumerate(dataloader, 0):
-            points, target = data
-            target = target[:, 0]
-            points = points.transpose(2, 1)
-            points, target = points.cuda(), target.cuda()
-            optimizer.zero_grad()
-            classifier = classifier.train()
-            pred, trans, trans_feat = classifier(points)
-            loss = F.nll_loss(pred, target)
-            if feature_transform:
-                loss += feature_transform_regularizer(trans_feat) * 0.001
-            loss.backward()
-            optimizer.step()
-            pred_choice = pred.data.max(1)[1]
-            correct = pred_choice.eq(target.data).cpu().sum()
-            print(
-                f"[{epoch}: {i}/{num_batch}] train loss: {loss.item()} accuracy: {format_accuracy(correct.item() / float(batchSize))}"
-            )
+    # Store loss and accuracy for graph
+    train_loss_x = []
+    train_loss_y = []
+    train_acc_x = []
+    train_acc_y = []
+    test_loss_x = []
+    test_loss_y = []
+    test_acc_x = []
+    test_acc_y = []
 
-            if i % 10 == 0:
-                j, data = next(enumerate(testdataloader, 0))
-                points, target = data
-                target = target[:, 0]
-                points = points.transpose(2, 1)
-                points, target = points.cuda(), target.cuda()
-                classifier = classifier.eval()
-                pred, _, _ = classifier(points)
-                loss = F.nll_loss(pred, target)
-                pred_choice = pred.data.max(1)[1]
-                correct = pred_choice.eq(target.data).cpu().sum()
-                print(
-                    f"[{epoch}: {i}/{num_batch}] \033[94mtest\033[0m loss: {loss.item()} accuracy: {format_accuracy(correct.item() / float(batchSize))}"
+    with tqdm(
+        total=epochs, desc="Training classifier", unit="epoch", position=0, leave=True
+    ) as pbar:
+        for epoch in range(epochs):
+            with tqdm(
+                total=num_batch,
+                desc=f"Epoch {epoch + 1}/{epochs}",
+                unit="batch",
+                position=epoch + 1,
+                leave=True,
+            ) as epoch_bar:
+                for i, data in enumerate(dataloader, 0):
+                    points, target = data
+                    target = target[:, 0]
+                    points = points.transpose(2, 1)
+                    points, target = points.cuda(), target.cuda()
+                    optimizer.zero_grad()
+                    classifier = classifier.train()
+                    pred, _, _ = classifier(points)
+                    loss = F.nll_loss(pred, target)
+                    loss.backward()
+                    optimizer.step()
+                    pred_choice = pred.data.max(1)[1]
+                    correct = pred_choice.eq(target.data).cpu().sum()
+                    train_accuracy = correct.item() / float(batchSize)
+
+                    # TODO Store train accuracy and loss for graph
+                    x_val = epoch + (i / num_batch)
+
+                    train_loss_x.append(x_val)
+                    train_loss_y.append(loss.item())
+                    train_acc_x.append(x_val)
+                    train_acc_y.append(train_accuracy)
+
+                    if i % 10 == 0:
+                        j, data = next(enumerate(testdataloader, 0))
+                        points, target = data
+                        target = target[:, 0]
+                        points = points.transpose(2, 1)
+                        points, target = points.cuda(), target.cuda()
+                        classifier = classifier.eval()
+                        pred, _, _ = classifier(points)
+                        test_loss = F.nll_loss(pred, target)
+                        pred_choice = pred.data.max(1)[1]
+                        correct = pred_choice.eq(target.data).cpu().sum()
+                        test_accuracy = correct.item() / float(batchSize)
+                        # TODO Store test accuracy and loss for graph
+                        test_loss_x.append(x_val)
+                        test_loss_y.append(test_loss.item())
+                        test_acc_x.append(x_val)
+                        test_acc_y.append(test_accuracy)
+
+                    epoch_bar.set_postfix(
+                        {
+                            "loss": loss.item(),
+                            "accuracy": format_accuracy(train_accuracy, color=False),
+                        }
+                    )
+                    epoch_bar.update(1)
+
+                scheduler.step()
+
+                torch.save(
+                    classifier.state_dict(), "%s/cls_model_%d.pth" % (outf, epoch)
                 )
 
-        scheduler.step()
+            pbar.update(1)
 
-        torch.save(classifier.state_dict(), "%s/cls_model_%d.pth" % (outf, epoch))
+    # Plot loss and accuracy graph
+    plt.figure(figsize=(12, 8))
+    plt.plot(train_loss_x, train_loss_y, label="Training Loss")
+    plt.plot(test_loss_x, test_loss_y, label="Testing Loss")
+    plt.plot(train_acc_x, train_acc_y, label="Training Accuracy")
+    plt.plot(test_acc_x, test_acc_y, label="Testing Accuracy")
+    plt.xlabel("Epoch")
+    plt.ylabel("Value")
+    plt.title("Training and Testing Loss and Accuracy")
+    plt.legend()
+    plt.show()
 
     total_correct = 0
     total_testset = 0
-    for i, data in tqdm(enumerate(testdataloader, 0)):
+    for i, data in enumerate(testdataloader, 0):
         points, target = data
         target = target[:, 0]
         points = points.transpose(2, 1)
