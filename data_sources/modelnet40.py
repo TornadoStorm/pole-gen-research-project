@@ -129,7 +129,7 @@ class ModelNet40(DataSource):
                 break
 
         with tqdm(desc="Processing data", total=file_count) as pbar:
-            for folder in listdir:
+            for folder in sorted(listdir):
                 label = len(classes)
                 classes.append(folder)
 

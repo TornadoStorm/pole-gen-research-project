@@ -9,4 +9,3 @@ ipykernel
 requests
 open3d
 matplotlib
-git+ssh://git@gitlab.utwente.nl/s2219735-bsc-research-project/mesh-to-points.git@main#egg=m2p
