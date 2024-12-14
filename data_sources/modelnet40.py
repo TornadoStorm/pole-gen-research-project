@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 import zipfile
@@ -5,21 +6,62 @@ from typing import List, Tuple
 
 import numpy as np
 import open3d as o3d
-import torch.utils.data as data
 from tqdm import tqdm
 
 import utils.file
+from models.data_source import DataSource
+from models.data_source_info import DataSourceInfo, DataSourceInfoEncoder
 from models.dataset import PointCloudDataset
-
-
-class DataSource:
-    def download(self) -> Tuple[data.Dataset, data.Dataset]:
-        pass
 
 
 # TODO: Augmentations for training data
 class ModelNet40(DataSource):
     URL = "http://modelnet.cs.princeton.edu/ModelNet40.zip"
+
+    INFO = DataSourceInfo(
+        class_names=[
+            "airplane",
+            "bathtub",
+            "bed",
+            "bench",
+            "bookshelf",
+            "bottle",
+            "bowl",
+            "car",
+            "chair",
+            "cone",
+            "cup",
+            "curtain",
+            "desk",
+            "door",
+            "dresser",
+            "flower_pot",
+            "glass_box",
+            "guitar",
+            "keyboard",
+            "lamp",
+            "laptop",
+            "mantel",
+            "monitor",
+            "night_stand",
+            "person",
+            "piano",
+            "plant",
+            "radio",
+            "range_hood",
+            "sink",
+            "sofa",
+            "stairs",
+            "stool",
+            "table",
+            "tent",
+            "toilet",
+            "tv_stand",
+            "vase",
+            "wardrobe",
+            "xbox",
+        ]
+    )
 
     @classmethod
     def download(
@@ -27,7 +69,8 @@ class ModelNet40(DataSource):
         npoints: int = 2500,
         train_outdir: str = "data/train",
         test_outdir: str = "data/test",
-    ) -> Tuple[data.Dataset, data.Dataset]:
+        info_outdir: str = "data",
+    ):
         temp_dir = tempfile.gettempdir()
         zip_path = os.path.join(temp_dir, "ModelNet40.zip")
         extract_dir = os.path.join(temp_dir, "ModelNet40")
@@ -115,4 +158,7 @@ class ModelNet40(DataSource):
                         file_list.append(out_path)
                         pbar.update(1)
 
-        return classes, PointCloudDataset(train_files), PointCloudDataset(test_files)
+        with open(os.path.join(info_outdir, "data_info.json"), "w") as f:
+            json.dump(cls.INFO, f, cls=DataSourceInfoEncoder)
+
+        return cls.INFO, PointCloudDataset(train_files), PointCloudDataset(test_files)

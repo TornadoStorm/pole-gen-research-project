@@ -3,6 +3,8 @@ from __future__ import print_function
 import os
 import random
 import warnings
+from collections import defaultdict
+from typing import List, Tuple
 
 import torch
 import torch.nn.functional as F
@@ -11,10 +13,12 @@ import torch.optim as optim
 import torch.utils.data
 from tqdm import tqdm
 
+from utils.string import format_accuracy
+
 from .model import PointNetCls, feature_transform_regularizer
 
 
-def train_classification(
+def train_classifier(
     train_dataset: torch.utils.data.Dataset,
     test_dataset: torch.utils.data.Dataset,
     k: int = 40,
@@ -25,7 +29,6 @@ def train_classification(
     model: str = "",
     feature_transform: bool = False,
 ) -> PointNetCls:
-    blue = lambda x: "\033[94m" + x + "\033[0m"
 
     manualSeed = random.randint(1, 10000)  # fix seed
     print("Random Seed: ", manualSeed)
@@ -83,14 +86,7 @@ def train_classification(
             pred_choice = pred.data.max(1)[1]
             correct = pred_choice.eq(target.data).cpu().sum()
             print(
-                "[%d: %d/%d] train loss: %f accuracy: %f"
-                % (
-                    epoch,
-                    i,
-                    num_batch,
-                    loss.item(),
-                    correct.item() / float(batchSize),
-                )
+                f"[{epoch}: {i}/{num_batch}] train loss: {loss.item()} accuracy: {format_accuracy(correct.item() / float(batchSize))}"
             )
 
             if i % 10 == 0:
@@ -105,15 +101,7 @@ def train_classification(
                 pred_choice = pred.data.max(1)[1]
                 correct = pred_choice.eq(target.data).cpu().sum()
                 print(
-                    "[%d: %d/%d] %s loss: %f accuracy: %f"
-                    % (
-                        epoch,
-                        i,
-                        num_batch,
-                        blue("test"),
-                        loss.item(),
-                        correct.item() / float(batchSize),
-                    )
+                    f"[{epoch}: {i}/{num_batch}] \033[94mtest\033[0m loss: {loss.item()} accuracy: {format_accuracy(correct.item() / float(batchSize))}"
                 )
 
         scheduler.step()
@@ -134,6 +122,31 @@ def train_classification(
         total_correct += correct.item()
         total_testset += points.size()[0]
 
-    print("final accuracy {}".format(total_correct / float(total_testset)))
+    print(f"final accuracy {format_accuracy(total_correct / float(total_testset))}")
 
     return classifier
+
+
+def evaluate_classifier(
+    classifier: PointNetCls,
+    test_dataset: torch.utils.data.Dataset,
+):
+    classifier.eval()
+    predictions: List[bool] = []
+    predictions_by_class: defaultdict[int, List[bool]] = defaultdict(list)
+    with torch.no_grad():
+        with tqdm(desc="Evaluating classifier", total=len(test_dataset)) as pbar:
+            for entry in test_dataset:
+                input_data = entry[0].unsqueeze(0)
+                input_data = input_data.transpose(1, 2)
+                scores = classifier(input_data)[0][0]
+                pre = scores.argmax().item()
+                exp = int(entry[1])
+                predictions.append(pre == exp)
+                predictions_by_class[exp].append(pre == exp)
+                pbar.update(1)
+
+    accuracy = sum(predictions) / len(predictions)
+    accuracy_by_class = {k: sum(v) / len(v) for k, v in predictions_by_class.items()}
+
+    return accuracy, accuracy_by_class
