@@ -1,11 +1,8 @@
 import os
-import struct
 from typing import IO, List, Tuple
 
-import numpy as np
-import open3d as o3d
 import requests
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 
 def download_file(url, output_path):

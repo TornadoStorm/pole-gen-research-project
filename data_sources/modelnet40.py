@@ -2,11 +2,10 @@ import json
 import os
 import tempfile
 import zipfile
-from typing import List, Tuple
+from typing import List
 
-import numpy as np
 import open3d as o3d
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 import utils.file
 from models.data_source import DataSource

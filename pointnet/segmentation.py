@@ -9,7 +9,7 @@ import torch.nn.functional as F
 import torch.nn.parallel
 import torch.optim as optim
 import torch.utils.data
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from pointnet.model import PointNetDenseCls, feature_transform_regularizer
 

@@ -107,7 +107,7 @@ def train_classifier(
                     correct = pred_choice.eq(target.data).cpu().sum()
                     train_accuracy = correct.item() / float(batchSize)
 
-                    # TODO Store train accuracy and loss for graph
+                    # Store train accuracy and loss for graph
                     x_val = epoch + (i / num_batch)
 
                     train_loss_x.append(x_val)
@@ -127,7 +127,7 @@ def train_classifier(
                         pred_choice = pred.data.max(1)[1]
                         correct = pred_choice.eq(target.data).cpu().sum()
                         test_accuracy = correct.item() / float(batchSize)
-                        # TODO Store test accuracy and loss for graph
+                        # Store test accuracy and loss for graph
                         test_loss_x.append(x_val)
                         test_loss_y.append(test_loss.item())
                         test_acc_x.append(x_val)
