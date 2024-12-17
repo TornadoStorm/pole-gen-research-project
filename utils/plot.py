@@ -1,9 +1,11 @@
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from matplotlib import pyplot as plt
 
 
-def plot_points(points: List[Tuple[float, float, float]]):
+def plot_points(
+    points: List[Tuple[float, float, float]], labels: Optional[List[int]] = None
+):
     fig = plt.figure(facecolor="none", edgecolor="none")
     ax = fig.add_subplot(111, projection="3d")
     z_values = [point[2] for point in points]
@@ -11,7 +13,7 @@ def plot_points(points: List[Tuple[float, float, float]]):
         [point[0] for point in points],
         [point[1] for point in points],
         z_values,
-        c=z_values,
+        c=labels if labels is not None else z_values,
         cmap="viridis",
         s=1,
     )

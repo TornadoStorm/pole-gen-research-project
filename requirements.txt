@@ -9,3 +9,5 @@ ipykernel
 requests
 open3d
 matplotlib
+segments-ai
+python-dotenv

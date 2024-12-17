@@ -176,3 +176,5 @@ seg/
 data/
 
 *.prof
+
+segments/
