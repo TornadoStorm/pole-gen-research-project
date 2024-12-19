@@ -10,6 +10,7 @@ from pole_gen.models.state import State
 from utils.mesh_tools import create_quad, normalize_mesh
 
 
+# TODO DELETE ME WHEN DONE
 def _add_road_meshes(mesh: o3d.geometry.TriangleMesh, state: State):
     road_meshes = []
     if state.road_presence[0] != 0:
