@@ -1,5 +1,6 @@
 from typing import List, Optional, Tuple
 
+import open3d as o3d
 from matplotlib import pyplot as plt
 from open3d.visualization.draw_plotly import get_plotly_fig
 
@@ -43,12 +44,9 @@ def plot_open3d(geometry_list: List):
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
     )
-    fig.update_scenes(xaxis_visible=False, yaxis_visible=False, zaxis_visible=True)
-    fig.update_layout(
-        scene=dict(
-            xaxis=dict(range=[-0.5, 0.5]),
-            yaxis=dict(range=[-0.5, 0.5]),
-            zaxis=dict(range=[-0.5, 0.5]),
-        )
+    fig.update_scenes(
+        xaxis=dict(range=[-0.5, 0.5], autorange=False),
+        yaxis=dict(range=[-0.5, 0.5], autorange=False),
+        zaxis=dict(range=[-0.5, 0.5], autorange=False),
     )
     fig.show()
