@@ -5,9 +5,9 @@ import open3d as o3d
 def generate_pole(
     slices: int = 0,
     circle_resolution: int = 16,
-    height: float = 10.5,
-    base_radius: float = 0.11785,
-    top_radius: float = 0.1115,
+    height: float = 8.45,
+    base_radius: float = 0.143,
+    top_radius: float = 0.0895,
 ):
     mesh = o3d.geometry.TriangleMesh()
     slices += 1
@@ -40,11 +40,11 @@ def generate_pole(
             )
 
     # Add bottom cap
-    bottom_center_idx = len(mesh.vertices)
-    mesh.vertices.append([0, 0, 0])
-    for j in range(circle_resolution):
-        next_j = (j + 1) % circle_resolution
-        mesh.triangles.append([bottom_center_idx, j, next_j])
+    # bottom_center_idx = len(mesh.vertices)
+    # mesh.vertices.append([0, 0, 0])
+    # for j in range(circle_resolution):
+    #     next_j = (j + 1) % circle_resolution
+    #     mesh.triangles.append([bottom_center_idx, j, next_j])
 
     # Add top cap
     top_center_idx = len(mesh.vertices)
