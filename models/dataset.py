@@ -49,9 +49,11 @@ class ElectricalPolesDataset(data.Dataset):
     LABELSET = "ground-truth"
 
     sample_uuids: List[str]
+    npoints: int
 
-    def __init__(self):
+    def __init__(self, npoints: int = 1024) -> None:
         super().__init__()
+        self.npoints = npoints
         self.sample_uuids = list(
             map(
                 lambda x: x.uuid,
@@ -70,17 +72,23 @@ class ElectricalPolesDataset(data.Dataset):
             sample.attributes.pcd.url
         )
 
-        point_set_tensor = torch.from_numpy(np.asarray(pcd.points).astype(np.float32))
-
-        # Center and normalize points
-        point_set_tensor -= point_set_tensor.mean(dim=0)
-        point_set_tensor /= point_set_tensor.abs().max()
-
-        label_tensor = torch.from_numpy(
-            np.asarray(sample.label.attributes.point_annotations).astype(np.int64)
+        # Sample points and labels
+        indices = np.random.choice(
+            len(pcd.points),
+            self.npoints,
+            replace=False,
         )
 
-        return point_set_tensor, label_tensor
+        points = np.asarray(pcd.points)[indices]
+        points -= points.mean(axis=0)  # Center
+        points /= np.abs(points).max()  # Normalize
+
+        labels = np.asarray(sample.label.attributes.point_annotations)[indices]
+
+        points_tensor = torch.from_numpy(np.asarray(points).astype(np.float32))
+        label_tensor = torch.from_numpy(np.asarray(labels).astype(np.int64))
+
+        return points_tensor, label_tensor
 
     def __len__(self) -> int:
         return len(self.sample_uuids)

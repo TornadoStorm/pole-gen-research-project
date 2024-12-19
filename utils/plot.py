@@ -1,6 +1,7 @@
 from typing import List, Optional, Tuple
 
 from matplotlib import pyplot as plt
+from open3d.visualization.draw_plotly import get_plotly_fig
 
 
 def plot_points(
@@ -33,3 +34,21 @@ def plot_points(
     ax.zaxis.pane.set_edgecolor((0.0, 0.0, 0.0, 0.0))
 
     plt.show()
+
+
+def plot_open3d(geometry_list: List):
+    fig = get_plotly_fig(geometry_list, mesh_show_wireframe=True)
+    fig.update_layout(
+        template="plotly_dark",
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+    )
+    fig.update_scenes(xaxis_visible=False, yaxis_visible=False, zaxis_visible=True)
+    fig.update_layout(
+        scene=dict(
+            xaxis=dict(range=[-0.5, 0.5]),
+            yaxis=dict(range=[-0.5, 0.5]),
+            zaxis=dict(range=[-0.5, 0.5]),
+        )
+    )
+    fig.show()
