@@ -73,5 +73,18 @@ def generate_utility_pole():
     add_traffic_lights(mesh, state)
     add_lamp(mesh, state)
 
+    # Scale and rotate everything a bit to give more variation
+    mesh.scale(random.uniform(0.9, 1.1), center=(0, 0, 0))
+    mesh.rotate(
+        mesh.get_rotation_matrix_from_xyz(
+            (
+                np.deg2rad(random.uniform(-5, 5)),
+                np.deg2rad(random.uniform(-5, 5)),
+                random.uniform(0, 2 * np.pi),
+            )
+        )
+    )
+
+    # Finish up and return the mesh
     normalize_mesh(mesh)
     return mesh
