@@ -24,17 +24,11 @@ def add_lamp(mesh: o3d.geometry.TriangleMesh, state: State):
             center=(0, 0, 0),
         )
         # Randomize position
-        lamp_mesh.translate(
-            [
-                0,
-                0,
-                max(
-                    state.traffic_light_heights[state.main_road]
-                    + 1,  # Always above traffic light
-                    min(
-                        7.5 + random.uniform(-1.0, 1.94), state.pole_scaled_height - 0.3
-                    ),
-                ),
-            ]
+        lamp_height = max(
+            state.traffic_light_heights[state.main_road]
+            + 1,  # Always above traffic light
+            min(7.5 + random.uniform(-1.0, 1.94), state.pole_scaled_height - 0.3),
         )
+        lamp_mesh.translate([0, 0, lamp_height])
+        state.lamp_height = lamp_height
         mesh += lamp_mesh

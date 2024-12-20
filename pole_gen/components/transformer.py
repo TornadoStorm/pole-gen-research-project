@@ -7,14 +7,10 @@ from pole_gen.models.state import State
 
 TRANSFORMER_SPAWN_CHANCE = 0.33
 
-CYLINDER_RESOLUTION = 16
-CYLINDER_RADIUS = 0.1
-CYLINDER_HEIGHT = 0.5
-
 
 def add_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
-    # _add_cylinder_transformer(mesh, state)
-    # return
+    _add_triple_transformer(mesh, state)
+    return
 
     random_val = np.random.random()
     if random_val > TRANSFORMER_SPAWN_CHANCE:
@@ -42,7 +38,13 @@ def _add_box_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
     )
     box.rotate(
         R=o3d.geometry.get_rotation_matrix_from_xyz(
-            (0, 0, random.uniform(0, 2 * np.pi))
+            (
+                0,
+                0,
+                np.deg2rad(
+                    (90 * state.rot_indices[state.main_road]) + random.uniform(90, 270)
+                ),
+            )
         ),
         center=(0, 0, 0),
     )
@@ -51,9 +53,46 @@ def _add_box_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
     return
 
 
+def _create_cylinder_transformer():
+    cylinder = o3d.geometry.TriangleMesh.create_cylinder(
+        radius=0.318, height=0.893, resolution=16
+    )
+    cylinder.scale(random.uniform(1.0, 1.426), center=(0, 0, 0))
+    return cylinder
+
+
 def _add_cylinder_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
-    # TODO Implement
-    pass
+    cylinder = _create_cylinder_transformer()
+    cylinder.translate(
+        (
+            random.uniform(0.5, 0.9),
+            0,
+            min(
+                state.pole_scaled_height,  # Always below pole
+                max(
+                    max(  #  Always above street lamp & traffic lights
+                        np.max(state.traffic_light_heights),
+                        state.lamp_height,
+                    ),
+                    10.0 + random.uniform(-0.1, 0.1),
+                ),
+            ),
+        )
+    )
+    cylinder.rotate(
+        R=o3d.geometry.get_rotation_matrix_from_xyz(
+            (
+                0,
+                0,
+                np.deg2rad(
+                    90 * (state.rot_indices[state.main_road] + random.choice([-1, 1]))
+                ),
+            )
+        ),
+        center=(0, 0, 0),
+    )
+
+    mesh += cylinder
 
 
 def _add_triple_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
