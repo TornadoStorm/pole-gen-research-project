@@ -6,6 +6,7 @@ import open3d as o3d
 from pole_gen.components.lamp import add_lamp
 from pole_gen.components.pole import add_pole
 from pole_gen.components.traffic_lights import add_traffic_lights
+from pole_gen.components.transformer import add_transformer
 from pole_gen.models.state import State
 from utils.mesh_tools import create_quad, normalize_mesh
 
@@ -72,14 +73,15 @@ def generate_utility_pole():
     add_pole(mesh, state)
     add_traffic_lights(mesh, state)
     add_lamp(mesh, state)
+    add_transformer(mesh, state)
 
     # Scale and rotate everything a bit to give more variation
     mesh.scale(random.uniform(0.9, 1.1), center=(0, 0, 0))
     mesh.rotate(
         mesh.get_rotation_matrix_from_xyz(
             (
-                np.deg2rad(random.uniform(-5, 5)),
-                np.deg2rad(random.uniform(-5, 5)),
+                np.deg2rad(random.uniform(-3, 3)),
+                np.deg2rad(random.uniform(-3, 3)),
                 random.uniform(0, 2 * np.pi),
             )
         )
