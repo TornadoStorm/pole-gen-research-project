@@ -48,5 +48,6 @@ def plot_open3d(geometry_list: List):
         xaxis=dict(range=[-0.5, 0.5], autorange=False),
         yaxis=dict(range=[-0.5, 0.5], autorange=False),
         zaxis=dict(range=[-0.5, 0.5], autorange=False),
+        aspectmode="cube",
     )
     fig.show()

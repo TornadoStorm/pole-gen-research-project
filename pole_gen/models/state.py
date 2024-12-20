@@ -8,3 +8,4 @@ class State:
     pole_scaled_height: float = 8.45
     traffic_light_heights: list[float] = [0, 0]
     lamp_height: float = 0.0
+    crossbars_placed: bool = False
