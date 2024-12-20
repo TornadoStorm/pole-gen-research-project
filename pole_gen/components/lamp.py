@@ -7,7 +7,7 @@ from pole_gen.models.state import State
 
 
 def add_lamp(mesh: o3d.geometry.TriangleMesh, state: State):
-    if random.random() <= 0.8:
+    if random.random() <= 0.5:
         lamp_mesh = o3d.io.read_triangle_mesh("pole_gen/meshes/lamp.ply")
         # Rotate to (main) road
         lamp_mesh.rotate(

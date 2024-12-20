@@ -3,41 +3,33 @@ import random
 import numpy as np
 import open3d as o3d
 
-from pole_gen.components.crossbar import load_double_crossbar
+from pole_gen.components.crossbar import create_double_crossbar
 from pole_gen.models.state import State
 
-TRANSFORMER_SPAWN_CHANCE = 0.33
-TRIPLE_TRANSFORMER_MIN_FREE_SPACE = 4.1
+TRIPLE_TRANSFORMER_MIN_FREE_SPACE = 5.0
 
 
 def add_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
-    # If we have enough space to add the crossbars for the triple transformer
-    if (
-        state.pole_scaled_height
-        - max(np.max(state.traffic_light_heights), state.lamp_height)
-        > TRIPLE_TRANSFORMER_MIN_FREE_SPACE
-    ):
-        _add_triple_transformer(mesh, state)
-    return
-
-    random_val = np.random.random()
-    if random_val > TRANSFORMER_SPAWN_CHANCE:
+    if np.random.random() > 0.33:
         return
 
-    if random_val <= TRANSFORMER_SPAWN_CHANCE / 3:
-        _add_box_transformer(mesh, state)
-    elif random_val <= 2 * TRANSFORMER_SPAWN_CHANCE / 3:
-        _add_cylinder_transformer(mesh, state)
-    else:
-        # If we have enough space to add the crossbars for the triple transformer
-        if (
-            state.pole_scaled_height
-            - max(np.max(state.traffic_light_heights), state.lamp_height)
-            > TRIPLE_TRANSFORMER_MIN_FREE_SPACE
-        ):
-            _add_triple_transformer(mesh, state)
-        else:
+    configuration = random.randint(0, 3)
+
+    match configuration:
+        case 0:
+            _add_box_transformer(mesh, state)
+        case 1:
             _add_cylinder_transformer(mesh, state)
+        case _:
+            # If we have enough space to add the crossbars for the triple transformer
+            if (
+                state.pole_scaled_height
+                - max(np.max(state.traffic_light_heights), state.lamp_height)
+                > TRIPLE_TRANSFORMER_MIN_FREE_SPACE
+            ):
+                _add_triple_transformer(mesh, state)
+            else:
+                _add_cylinder_transformer(mesh, state)
 
 
 def _add_box_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
@@ -124,6 +116,7 @@ def _add_triple_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
         ),
     )
 
+    d = random.choice([-1, 1])
     for i in range(3):
         cylinder = _create_cylinder_transformer(scale=False)
         cylinder.translate(
@@ -138,7 +131,7 @@ def _add_triple_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
                 (
                     0,
                     0,
-                    np.deg2rad(90 * (state.rot_indices[state.main_road] + i + 1)),
+                    np.deg2rad(90 * (state.rot_indices[state.main_road] + (i * d))),
                 )
             ),
             center=(0, 0, 0),
@@ -147,7 +140,7 @@ def _add_triple_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
 
     end_z = max(z, state.pole_scaled_height - random.uniform(0.78, 1.2))
 
-    crossbar_1 = load_double_crossbar(2)
+    crossbar_1 = create_double_crossbar(2)
     crossbar_1.translate((0, 0, np.interp(0.5, (0, 1), (z, end_z))))
     crossbar_1.rotate(
         R=o3d.geometry.get_rotation_matrix_from_xyz(
@@ -157,7 +150,7 @@ def _add_triple_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
     )
     mesh += crossbar_1
 
-    crossbar_2 = load_double_crossbar(1)
+    crossbar_2 = create_double_crossbar(1)
     crossbar_2.translate((0, 0, end_z))
     crossbar_2.rotate(
         R=o3d.geometry.get_rotation_matrix_from_xyz(

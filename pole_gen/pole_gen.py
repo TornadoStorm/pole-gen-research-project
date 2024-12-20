@@ -3,6 +3,7 @@ import random
 import numpy as np
 import open3d as o3d
 
+from pole_gen.components.crossbar import add_crossbar
 from pole_gen.components.lamp import add_lamp
 from pole_gen.components.pole import add_pole
 from pole_gen.components.traffic_lights import add_traffic_lights
@@ -74,6 +75,7 @@ def generate_utility_pole():
     add_traffic_lights(mesh, state)
     add_lamp(mesh, state)
     add_transformer(mesh, state)
+    add_crossbar(mesh, state)
 
     # Scale and rotate everything a bit to give more variation
     mesh.scale(random.uniform(0.9, 1.1), center=(0, 0, 0))
