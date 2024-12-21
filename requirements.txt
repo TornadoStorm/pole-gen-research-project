@@ -1,11 +1,14 @@
-torch
-torchvision
-torchaudio
+# Requirements as specified by Open3D for its ML pipeline
+-f https://download.pytorch.org/whl/torch/
+torch==2.0.1+cu117
+-f https://download.pytorch.org/whl/torchvision/
+torchvision==0.15.2+cu117
+tensorboard
+# Other requirements
 tqdm
 numpy
 pandas
 plyfile
-ipykernel
 requests
 open3d
 matplotlib
