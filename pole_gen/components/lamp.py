@@ -3,10 +3,10 @@ import random
 import numpy as np
 import open3d as o3d
 
-from pole_gen.models.state import State
+from pole_gen.models import State, UtilityPoleLabel
 
 
-def add_lamp(mesh: o3d.geometry.TriangleMesh, state: State):
+def add_lamp(state: State):
     if random.random() <= 0.5:
         lamp_mesh = o3d.io.read_triangle_mesh("pole_gen/meshes/lamp.ply")
         # Rotate to (main) road
@@ -31,4 +31,4 @@ def add_lamp(mesh: o3d.geometry.TriangleMesh, state: State):
         )
         lamp_mesh.translate([0, 0, lamp_height])
         state.lamp_height = lamp_height
-        mesh += lamp_mesh
+        state.geometry[lamp_mesh] = UtilityPoleLabel.LAMP

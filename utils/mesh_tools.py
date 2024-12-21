@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import List, Tuple
 
 import numpy as np
 import open3d as o3d
@@ -18,6 +18,19 @@ def create_quad(
     )
     mesh.triangles = o3d.utility.Vector3iVector([[0, 1, 2], [0, 2, 3]])
     return mesh
+
+
+def normalize_geometry(geometry: List[o3d.geometry.TriangleMesh]):
+    vertices = np.concatenate([np.asarray(mesh.vertices) for mesh in geometry])
+    min_bounds = vertices.min(axis=0)
+    max_bounds = vertices.max(axis=0)
+    center = (min_bounds + max_bounds) / 2
+    scale = max_bounds - min_bounds
+    for mesh in geometry:
+        vertices = np.asarray(mesh.vertices)
+        vertices -= center
+        vertices /= scale.max()
+        mesh.vertices = o3d.utility.Vector3dVector(vertices)
 
 
 def normalize_mesh(mesh):

@@ -3,7 +3,7 @@ import random
 import numpy as np
 import open3d as o3d
 
-from pole_gen.models.state import State
+from pole_gen.models import State, UtilityPoleLabel
 
 
 def create_double_crossbar(variant: int) -> o3d.geometry.TriangleMesh:
@@ -23,8 +23,8 @@ def create_single_crossbar() -> o3d.geometry.TriangleMesh:
     return o3d.io.read_triangle_mesh(f"pole_gen/meshes/crossbar_single_1.ply")
 
 
-def add_crossbar(mesh: o3d.geometry.TriangleMesh, state: State):
-    if state.crossbars_placed:
+def add_crossbar(state: State):
+    if any(l == UtilityPoleLabel.CROSSARM for l in state.geometry.values()):
         return
 
     if random.random() > 0.4:
@@ -45,11 +45,11 @@ def add_crossbar(mesh: o3d.geometry.TriangleMesh, state: State):
             for _ in range(3):
                 if z < z_max:
                     break  # Stop if we reach the lamp or traffic light
-                crossbar = create_single_crossbar()
-                crossbar.translate((0, 0, z))
-                crossbar.rotate(R=r, center=(0, 0, 0))
+                ca = create_single_crossbar()
+                ca.translate((0, 0, z))
+                ca.rotate(R=r, center=(0, 0, 0))
                 z -= random.uniform(0.9, 1.1)
-                mesh += crossbar
+                state.geometry[ca] = UtilityPoleLabel.CROSSARM
 
             # May have one between street lamp and traffic light if they are present
             if (
@@ -57,8 +57,8 @@ def add_crossbar(mesh: o3d.geometry.TriangleMesh, state: State):
                 and state.traffic_light_heights[state.main_road] > 0
                 and random.random() <= 0.5
             ):
-                crossbar = create_single_crossbar()
-                crossbar.translate(
+                ca = create_single_crossbar()
+                ca.translate(
                     (
                         0,
                         0,
@@ -72,40 +72,38 @@ def add_crossbar(mesh: o3d.geometry.TriangleMesh, state: State):
                         ),
                     )
                 )
-                crossbar.rotate(R=r, center=(0, 0, 0))
-                mesh += crossbar
+                ca.rotate(R=r, center=(0, 0, 0))
+                state.geometry[ca] = UtilityPoleLabel.CROSSARM
         case 1:
             # One big plank on top (up to 0.3m down)
-            cb = create_top_crossbar()
-            cb.scale(random.uniform(0.9, 1.1), center=(0, 0, 0))
-            cb.translate((0, 0, state.pole_scaled_height - (random.random() * 0.35)))
-            cb.rotate(R=r, center=(0, 0, 0))
-            mesh += cb
+            ca = create_top_crossbar()
+            ca.scale(random.uniform(0.9, 1.1), center=(0, 0, 0))
+            ca.translate((0, 0, state.pole_scaled_height - (random.random() * 0.35)))
+            ca.rotate(R=r, center=(0, 0, 0))
+            state.geometry[ca] = UtilityPoleLabel.CROSSARM
         case 2:
             # Two smalls near top (Like 0.62-0.9m from top)
-            cb = create_double_crossbar(1)
-            cb.translate((0, 0, state.pole_scaled_height - random.uniform(0.62, 0.9)))
-            cb.rotate(R=r, center=(0, 0, 0))
-            mesh += cb
+            ca = create_double_crossbar(1)
+            ca.translate((0, 0, state.pole_scaled_height - random.uniform(0.62, 0.9)))
+            ca.rotate(R=r, center=(0, 0, 0))
+            state.geometry[ca] = UtilityPoleLabel.CROSSARM
         case 3:
             # Single on side of (main) road (~1.3-2.9m down)
-            cb = create_single_crossbar()
-            cb.translate(
+            ca = create_single_crossbar()
+            ca.translate(
                 (0, 0, max(z_max, state.pole_scaled_height - random.uniform(1.3, 2.9)))
             )
-            cb.rotate(R=r, center=(0, 0, 0))
-            mesh += cb
+            ca.rotate(R=r, center=(0, 0, 0))
+            state.geometry[ca] = UtilityPoleLabel.CROSSARM
         case 4:
             # 3 pairs (~1.2m spacing, ~0.3m down)
             z = state.pole_scaled_height - random.uniform(0.25, 0.35)
             for _ in range(3):
                 if z < z_max:
                     break  # Stop if we reach the lamp or traffic light
-                crossbar = create_double_crossbar(1)
-                crossbar.translate((0, 0, z))
-                crossbar.rotate(R=r, center=(0, 0, 0))
+                ca = create_double_crossbar(1)
+                ca.translate((0, 0, z))
+                ca.rotate(R=r, center=(0, 0, 0))
                 z -= random.uniform(1.1, 1.3)
-                mesh += crossbar
+                state.geometry[ca] = UtilityPoleLabel.CROSSARM
             pass
-
-    state.crossbars_placed = True

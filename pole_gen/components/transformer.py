@@ -4,12 +4,12 @@ import numpy as np
 import open3d as o3d
 
 from pole_gen.components.crossbar import create_double_crossbar
-from pole_gen.models.state import State
+from pole_gen.models import State, UtilityPoleLabel
 
 TRIPLE_TRANSFORMER_MIN_FREE_SPACE = 5.0
 
 
-def add_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
+def add_transformer(state: State):
     if np.random.random() > 0.33:
         return
 
@@ -17,9 +17,9 @@ def add_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
 
     match configuration:
         case 0:
-            _add_box_transformer(mesh, state)
+            _add_box_transformer(state)
         case 1:
-            _add_cylinder_transformer(mesh, state)
+            _add_cylinder_transformer(state)
         case _:
             # If we have enough space to add the crossbars for the triple transformer
             if (
@@ -27,12 +27,12 @@ def add_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
                 - max(np.max(state.traffic_light_heights), state.lamp_height)
                 > TRIPLE_TRANSFORMER_MIN_FREE_SPACE
             ):
-                _add_triple_transformer(mesh, state)
+                _add_triple_transformer(state)
             else:
-                _add_cylinder_transformer(mesh, state)
+                _add_cylinder_transformer(state)
 
 
-def _add_box_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
+def _add_box_transformer(state: State):
     size = (0.417, 0.765, 0.573)
     box = o3d.geometry.TriangleMesh.create_box(
         width=size[0], height=size[1], depth=size[2]
@@ -57,8 +57,7 @@ def _add_box_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
         center=(0, 0, 0),
     )
 
-    mesh += box
-    return
+    state.geometry[box] = UtilityPoleLabel.TRANSFORMER
 
 
 def _create_cylinder_transformer(scale: bool = True):
@@ -70,7 +69,7 @@ def _create_cylinder_transformer(scale: bool = True):
     return cylinder
 
 
-def _add_cylinder_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
+def _add_cylinder_transformer(state: State):
     cylinder = _create_cylinder_transformer()
     cylinder.translate(
         (
@@ -101,10 +100,10 @@ def _add_cylinder_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
         center=(0, 0, 0),
     )
 
-    mesh += cylinder
+    state.geometry[cylinder] = UtilityPoleLabel.TRANSFORMER
 
 
-def _add_triple_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
+def _add_triple_transformer(state: State):
     z = min(
         state.pole_scaled_height,  # Always below pole
         max(
@@ -136,7 +135,7 @@ def _add_triple_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
             ),
             center=(0, 0, 0),
         )
-        mesh += cylinder
+        state.geometry[cylinder] = UtilityPoleLabel.TRANSFORMER
 
     end_z = max(z, state.pole_scaled_height - random.uniform(0.78, 1.2))
 
@@ -148,7 +147,7 @@ def _add_triple_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
         ),
         center=(0, 0, 0),
     )
-    mesh += crossbar_1
+    state.geometry[crossbar_1] = UtilityPoleLabel.CROSSARM
 
     crossbar_2 = create_double_crossbar(1)
     crossbar_2.translate((0, 0, end_z))
@@ -158,6 +157,4 @@ def _add_triple_transformer(mesh: o3d.geometry.TriangleMesh, state: State):
         ),
         center=(0, 0, 0),
     )
-    mesh += crossbar_2
-
-    state.crossbars_placed = True
+    state.geometry[crossbar_2] = UtilityPoleLabel.CROSSARM

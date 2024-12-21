@@ -8,12 +8,12 @@ from pole_gen.components.lamp import add_lamp
 from pole_gen.components.pole import add_pole
 from pole_gen.components.traffic_lights import add_traffic_lights
 from pole_gen.components.transformer import add_transformer
-from pole_gen.models.state import State
-from utils.mesh_tools import create_quad, normalize_mesh
+from pole_gen.models import State, UtilityPoleLabel
+from utils.mesh_tools import create_quad, normalize_geometry
 
 
 # TODO DELETE ME WHEN DONE
-def _add_road_meshes(mesh: o3d.geometry.TriangleMesh, state: State):
+def _add_road_meshes(state: State):
     road_meshes = []
     if state.road_presence[0] != 0:
         road_meshes.append(
@@ -33,12 +33,10 @@ def _add_road_meshes(mesh: o3d.geometry.TriangleMesh, state: State):
         )
 
     for road_mesh in road_meshes:
-        mesh += road_mesh
+        state.geometry[road_mesh] = UtilityPoleLabel.UNLABELED
 
 
-def generate_utility_pole():
-    mesh = o3d.geometry.TriangleMesh()
-
+def generate_utility_pole() -> State:
     state = State()
 
     # Simulate having a road at a given side (1, -1) or not (0)
@@ -70,25 +68,26 @@ def generate_utility_pole():
         case -1:
             state.rot_indices[1] = 3
 
-    _add_road_meshes(mesh, state)
-    add_pole(mesh, state)
-    add_traffic_lights(mesh, state)
-    add_lamp(mesh, state)
-    add_transformer(mesh, state)
-    add_crossbar(mesh, state)
+    _add_road_meshes(state)
+    add_pole(state)
+    add_traffic_lights(state)
+    add_lamp(state)
+    add_transformer(state)
+    add_crossbar(state)
 
     # Scale and rotate everything a bit to give more variation
-    mesh.scale(random.uniform(0.9, 1.1), center=(0, 0, 0))
-    mesh.rotate(
-        mesh.get_rotation_matrix_from_xyz(
-            (
-                np.deg2rad(random.uniform(-3, 3)),
-                np.deg2rad(random.uniform(-3, 3)),
-                random.uniform(0, 2 * np.pi),
-            )
-        )
+    # Also normalize the mesh to make sure it's centered and has a unit bounding box
+    random_scale = random.uniform(0.9, 1.1)
+    random_rotation = (
+        np.deg2rad(random.uniform(-3, 3)),
+        np.deg2rad(random.uniform(-3, 3)),
+        random.uniform(0, 2 * np.pi),
     )
+    for mesh in state.geometry.keys():
+        mesh.scale(random_scale, center=(0, 0, 0))
+        mesh.rotate(
+            mesh.get_rotation_matrix_from_xyz(random_rotation), center=(0, 0, 0)
+        )
+    normalize_geometry(state.geometry.keys())
 
-    # Finish up and return the mesh
-    normalize_mesh(mesh)
-    return mesh
+    return state

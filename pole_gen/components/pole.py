@@ -1,12 +1,11 @@
 import numpy as np
 import open3d as o3d
 
-from pole_gen.models.state import State
+from pole_gen.models import State, UtilityPoleLabel
 from utils.mesh_tools import create_cylinder
 
 
 def add_pole(
-    mesh: o3d.geometry.TriangleMesh,
     state: State,
 ):
     pole_mesh = create_cylinder(
@@ -22,4 +21,4 @@ def add_pole(
     if state.pole_scale != 1.0:
         pole_mesh.scale(state.pole_scale, center=(0, 0, 0))
 
-    mesh += pole_mesh
+    state.geometry[pole_mesh] = UtilityPoleLabel.POLE
