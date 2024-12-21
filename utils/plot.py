@@ -50,4 +50,9 @@ def plot_open3d(geometry_list: List):
         zaxis=dict(range=[-0.5, 0.5], autorange=False),
         aspectmode="cube",
     )
+
+    for trace in fig.data:
+        if hasattr(trace, "showscale"):
+            trace.update(showscale=False)
+
     fig.show()

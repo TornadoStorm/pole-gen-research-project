@@ -16,13 +16,25 @@ class UtilityPoleLabel(Enum):
 
 
 class State:
-    geometry: Dict[o3d.geometry.TriangleMesh, UtilityPoleLabel] = {}
-    intersection: bool = False
-    road_presence: list[int] = [0, 0]
-    main_road: int = 0
-    rot_indices: list[int] = [0, 0]
-    pole_base_height: float = 8.45
-    pole_scale: float = 1.0
-    pole_scaled_height: float = 8.45
-    traffic_light_heights: list[float] = [0, 0]
-    lamp_height: float = 0.0
+    geometry: Dict[o3d.geometry.TriangleMesh, UtilityPoleLabel]
+    intersection: bool
+    road_presence: list[int]
+    main_road: int
+    rot_indices: list[int]
+    pole_base_height: float
+    pole_scale: float
+    pole_scaled_height: float
+    traffic_light_heights: list[float]
+    lamp_height: float
+
+    def __init__(self):
+        self.geometry = {}
+        self.intersection = False
+        self.road_presence = [0, 0]
+        self.main_road = 0
+        self.rot_indices = [0, 0]
+        self.pole_base_height = 8.45
+        self.pole_scale = 1.0
+        self.pole_scaled_height = 8.45
+        self.traffic_light_heights = [0, 0]
+        self.lamp_height = 0.0
