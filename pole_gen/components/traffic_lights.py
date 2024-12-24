@@ -25,9 +25,11 @@ MIN_PED_H = 2.34
 MAX_PED_H = 2.62
 
 
-def _add_predestrian_light(height: float, road_index: int, state: State):
+def _add_predestrian_light(
+    height: float, road_index: int, state: State, variant: int = 0
+):
     pedestrian_light_mesh = o3d.io.read_triangle_mesh(
-        f"pole_gen/meshes/pedestrian_traffic_light_{PED_MAP[road_index][(state.road_presence[0], state.road_presence[1])]}.ply"
+        f"pole_gen/meshes/pedestrian_traffic_light_{PED_MAP[road_index][(state.road_presence[0], state.road_presence[1])] + (variant * 2)}.ply"
     )
     pedestrian_light_mesh.rotate(
         pedestrian_light_mesh.get_rotation_matrix_from_xyz(
@@ -49,7 +51,9 @@ def add_traffic_lights(state: State):
             [i for i, v in enumerate(state.road_presence) if v != 0]
         )
         pedestrian_light_height = random.uniform(MIN_PED_H, MAX_PED_H)
-        _add_predestrian_light(pedestrian_light_height, road_index, state)
+        _add_predestrian_light(
+            pedestrian_light_height, road_index, state, random.choice([0, 1])
+        )
     elif random.random() <= 0.5:
         # Traffic lights with pedestrian lights
         spawn_chances = [0.4 for _ in state.road_presence]
@@ -93,4 +97,6 @@ def add_traffic_lights(state: State):
                 traffic_light_mesh.translate([0, 0, state.traffic_light_heights[i]])
                 state.geometry[traffic_light_mesh] = UtilityPoleLabel.TRAFFIC_LIGHT
 
-            _add_predestrian_light(pedestrian_light_height, i, state)
+            _add_predestrian_light(
+                pedestrian_light_height, i, state, random.choice([0, 1])
+            )
