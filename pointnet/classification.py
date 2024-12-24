@@ -1,7 +1,6 @@
 from __future__ import print_function
 
 import os
-import random
 import warnings
 from collections import defaultdict
 from typing import List
@@ -32,9 +31,9 @@ def train_classifier(
     feature_transform: bool = False,
 ) -> PointNetCls:
 
-    manualSeed = random.randint(1, 10000)  # fix seed
+    manualSeed = np.random.randint(1, 10000)  # fix seed
     print("Random Seed: ", manualSeed)
-    random.seed(manualSeed)
+    np.random.seed(manualSeed)
     torch.manual_seed(manualSeed)
 
     dataloader = torch.utils.data.DataLoader(

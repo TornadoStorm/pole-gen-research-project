@@ -1,7 +1,6 @@
 from __future__ import print_function
 
 import os
-import random
 
 import numpy as np
 import torch
@@ -26,9 +25,9 @@ def train_segmentation(
     model: str = "",
     feature_transform: bool = False,
 ):
-    manualSeed = random.randint(1, 10000)  # fix seed
+    manualSeed = np.random.randint(1, 10000)  # fix seed
     print("Random Seed: ", manualSeed)
-    random.seed(manualSeed)
+    np.random.seed(manualSeed)
     torch.manual_seed(manualSeed)
 
     dataloader = torch.utils.data.DataLoader(

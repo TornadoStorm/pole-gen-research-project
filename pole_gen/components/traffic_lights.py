@@ -1,9 +1,7 @@
-import random
-
 import numpy as np
 import open3d as o3d
 
-from pole_gen.models import State, UtilityPoleLabel
+from ..models import State, UtilityPoleLabel
 
 # Stinky hack to decide on the pedestrian light model from its context.
 PED_MAP = {
@@ -45,28 +43,28 @@ def add_traffic_lights(state: State):
     if not state.intersection:
         return
 
-    if random.random() <= 0.2:
+    if np.random.random() <= 0.2:
         # Pedestrian lights
-        road_index = random.choice(
+        road_index = np.random.choice(
             [i for i, v in enumerate(state.road_presence) if v != 0]
         )
-        pedestrian_light_height = random.uniform(MIN_PED_H, MAX_PED_H)
+        pedestrian_light_height = np.random.uniform(MIN_PED_H, MAX_PED_H)
         _add_predestrian_light(
-            pedestrian_light_height, road_index, state, random.choice([0, 1])
+            pedestrian_light_height, road_index, state, np.random.choice([0, 1])
         )
-    elif random.random() <= 0.5:
+    elif np.random.random() <= 0.5:
         # Traffic lights with pedestrian lights
         spawn_chances = [0.4 for _ in state.road_presence]
         spawn_chances[state.main_road] = 1.0
 
-        pedestrian_light_height = random.uniform(MIN_PED_H, MAX_PED_H)
+        pedestrian_light_height = np.random.uniform(MIN_PED_H, MAX_PED_H)
 
         for i in range(len(spawn_chances)):
-            if random.random() > spawn_chances[i]:
+            if np.random.random() > spawn_chances[i]:
                 continue
 
-            traffic_light_index = random.choice([1, 2, 3])
-            state.traffic_light_heights[i] = random.uniform(4.17012, 5.2)
+            traffic_light_index = np.random.choice([1, 2, 3])
+            state.traffic_light_heights[i] = np.random.uniform(4.17012, 5.2)
             traffic_light_mesh: o3d.geometry.TriangleMesh = None
 
             match traffic_light_index:
@@ -74,7 +72,7 @@ def add_traffic_lights(state: State):
                     traffic_light_mesh = o3d.io.read_triangle_mesh(
                         "pole_gen/meshes/traffic_light_1.ply"
                     )
-                    if random.random() <= 0.5:
+                    if np.random.random() <= 0.5:
                         traffic_light_mesh += o3d.io.read_triangle_mesh(
                             "pole_gen/meshes/traffic_light_1_sign.ply"
                         )
@@ -98,5 +96,5 @@ def add_traffic_lights(state: State):
                 state.geometry[traffic_light_mesh] = UtilityPoleLabel.TRAFFIC_LIGHT
 
             _add_predestrian_light(
-                pedestrian_light_height, i, state, random.choice([0, 1])
+                pedestrian_light_height, i, state, np.random.choice([0, 1])
             )

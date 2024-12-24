@@ -1,10 +1,8 @@
-import random
-
 import numpy as np
 import open3d as o3d
 
-from pole_gen.components.crossbar import create_double_crossbar
-from pole_gen.models import State, UtilityPoleLabel
+from ..components.crossbar import create_double_crossbar
+from ..models import State, UtilityPoleLabel
 
 TRIPLE_TRANSFORMER_MIN_FREE_SPACE = 5.0
 
@@ -13,7 +11,7 @@ def add_transformer(state: State):
     if np.random.random() > 0.33:
         return
 
-    configuration = random.randint(0, 3)
+    configuration = np.random.randint(0, 3)
 
     match configuration:
         case 0:
@@ -39,9 +37,9 @@ def _add_box_transformer(state: State):
     )
     box.translate(
         (
-            random.uniform(0.45, 0.5) - (size[0] / 2),
+            np.random.uniform(0.45, 0.5) - (size[0] / 2),
             -(size[1] / 2),
-            random.uniform(4.404, 4.73) - (size[2] / 2),
+            np.random.uniform(4.404, 4.73) - (size[2] / 2),
         )
     )
     box.rotate(
@@ -50,7 +48,8 @@ def _add_box_transformer(state: State):
                 0,
                 0,
                 np.deg2rad(
-                    (90 * state.rot_indices[state.main_road]) + random.uniform(90, 270)
+                    (90 * state.rot_indices[state.main_road])
+                    + np.random.uniform(90, 270)
                 ),
             )
         ),
@@ -65,7 +64,7 @@ def _create_cylinder_transformer(scale: bool = True):
         radius=0.318, height=0.893, resolution=16
     )
     if scale:
-        cylinder.scale(random.uniform(1.0, 1.426), center=(0, 0, 0))
+        cylinder.scale(np.random.uniform(1.0, 1.426), center=(0, 0, 0))
     return cylinder
 
 
@@ -73,7 +72,7 @@ def _add_cylinder_transformer(state: State):
     cylinder = _create_cylinder_transformer()
     cylinder.translate(
         (
-            random.uniform(0.5, 0.9),
+            np.random.uniform(0.5, 0.9),
             0,
             min(
                 state.pole_scaled_height,  # Always below pole
@@ -82,7 +81,7 @@ def _add_cylinder_transformer(state: State):
                         np.max(state.traffic_light_heights),
                         state.lamp_height,
                     ),
-                    random.uniform(9.9, 10.1),
+                    np.random.uniform(9.9, 10.1),
                 ),
             ),
         )
@@ -93,7 +92,8 @@ def _add_cylinder_transformer(state: State):
                 0,
                 0,
                 np.deg2rad(
-                    90 * (state.rot_indices[state.main_road] + random.choice([-1, 1]))
+                    90
+                    * (state.rot_indices[state.main_road] + np.random.choice([-1, 1]))
                 ),
             )
         ),
@@ -111,16 +111,16 @@ def _add_triple_transformer(state: State):
                 np.max(state.traffic_light_heights),
                 state.lamp_height,
             ),
-            state.pole_scaled_height - random.uniform(4.1, 4.2),
+            state.pole_scaled_height - np.random.uniform(4.1, 4.2),
         ),
     )
 
-    d = random.choice([-1, 1])
+    d = np.random.choice([-1, 1])
     for i in range(3):
         cylinder = _create_cylinder_transformer(scale=False)
         cylinder.translate(
             (
-                random.uniform(0.65, 0.85),
+                np.random.uniform(0.65, 0.85),
                 0,
                 z,
             )
@@ -137,7 +137,7 @@ def _add_triple_transformer(state: State):
         )
         state.geometry[cylinder] = UtilityPoleLabel.TRANSFORMER
 
-    end_z = max(z, state.pole_scaled_height - random.uniform(0.78, 1.2))
+    end_z = max(z, state.pole_scaled_height - np.random.uniform(0.78, 1.2))
 
     crossbar_1 = create_double_crossbar(2)
     crossbar_1.translate((0, 0, np.interp(0.5, (0, 1), (z, end_z))))

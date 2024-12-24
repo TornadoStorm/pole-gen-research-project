@@ -1,17 +1,21 @@
 import numpy as np
 import open3d as o3d
 
-from pole_gen.models import State, UtilityPoleLabel
 from utils.mesh_tools import create_cylinder
+
+from ..models import State, UtilityPoleLabel
 
 
 def add_pole(
     state: State,
 ):
+    state.pole_base_radius = 0.143
+    state.pole_top_radius = 0.0895
+
     pole_mesh = create_cylinder(
         resolution=16,
-        base_radius=0.143,
-        top_radius=0.0895,
+        base_radius=state.pole_base_radius,
+        top_radius=state.pole_top_radius,
         depth=state.pole_base_height,
         top_cap=True,
         bottom_cap=False,
