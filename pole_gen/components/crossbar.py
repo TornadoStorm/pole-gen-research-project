@@ -34,14 +34,16 @@ def add_crossbar(state: State):
         (0, 0, np.deg2rad(90 * state.rot_indices[state.main_road]))
     )
 
-    z_max = max(state.lamp_height, state.traffic_light_heights[state.main_road]) + 1
+    z_min = max(state.lamp_height, state.traffic_light_heights[state.main_road]) + 1
+    if z_min > state.pole_scaled_height:
+        return
 
     match configuration:
         case 0:
             # 3 on side of (main) road (0.3m down, 1m spacing)
             z = state.pole_scaled_height - np.random.uniform(0.25, 0.35)
             for _ in range(3):
-                if z < z_max:
+                if z < z_min:
                     break  # Stop if we reach the lamp or traffic light
                 ca = create_single_crossbar()
                 ca.translate((0, 0, z))
@@ -94,7 +96,7 @@ def add_crossbar(state: State):
                 (
                     0,
                     0,
-                    max(z_max, state.pole_scaled_height - np.random.uniform(1.3, 2.9)),
+                    max(z_min, state.pole_scaled_height - np.random.uniform(1.3, 2.9)),
                 )
             )
             ca.rotate(R=r, center=(0, 0, 0))
@@ -103,7 +105,7 @@ def add_crossbar(state: State):
             # 3 pairs (~1.2m spacing, ~0.3m down)
             z = state.pole_scaled_height - np.random.uniform(0.25, 0.35)
             for _ in range(3):
-                if z < z_max:
+                if z < z_min:
                     break  # Stop if we reach the lamp or traffic light
                 ca = create_double_crossbar(1)
                 ca.translate((0, 0, z))

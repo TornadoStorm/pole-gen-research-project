@@ -13,7 +13,7 @@ def add_signs(state: State):
         SIZE = (2.28, 0.139, 0.469)
         mesh = o3d.geometry.TriangleMesh.create_box(SIZE[0], SIZE[1], SIZE[2])
         z = np.random.uniform(4.75, 5.0) - (SIZE[2] / 2)
-        mesh.translate([-SIZE[0] / 2, state.pole_radius_at(z), z])
+        mesh.translate([-SIZE[0] / 2, state.pole_radius_at(z) + (SIZE[1] / 2), z])
         # Rotate a bit on all axes
         mesh.rotate(
             mesh.get_rotation_matrix_from_xyz(
@@ -22,7 +22,7 @@ def add_signs(state: State):
                     np.deg2rad(np.radians(np.random.uniform(-2, 2))),
                     np.deg2rad(np.radians(np.random.uniform(-2, 2))),
                 )
-            ),
+            )
         )
         # Rotate towards the road
         mesh.rotate(
@@ -38,7 +38,7 @@ def add_signs(state: State):
         SIZE = (0.392, 0.139, 0.392)
         mesh = o3d.geometry.TriangleMesh.create_box(SIZE[0], SIZE[1], SIZE[2])
         z = np.random.uniform(2.75, 3.0) - (SIZE[2] / 2)
-        mesh.translate([0, state.pole_radius_at(z) + SIZE[1], z])
+        mesh.translate([state.pole_radius_at(z) + (SIZE[0] / 2), -SIZE[1] / 2, z])
         # Rotate towards sidewalk
         mesh.rotate(
             mesh.get_rotation_matrix_from_xyz(
@@ -50,6 +50,7 @@ def add_signs(state: State):
                         + np.random.uniform(135, 225)
                     ),
                 )
-            )
+            ),
+            center=(0, 0, 0),
         )
         state.geometry[mesh] = UtilityPoleLabel.SIGN
