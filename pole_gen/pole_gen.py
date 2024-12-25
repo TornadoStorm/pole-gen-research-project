@@ -1,13 +1,14 @@
 import numpy as np
-import open3d as o3d
 
-from pole_gen.components.crossbar import add_crossbar
-from pole_gen.components.lamp import add_lamp
-from pole_gen.components.pole import add_pole
-from pole_gen.components.traffic_lights import add_traffic_lights
-from pole_gen.components.transformer import add_transformer
-from pole_gen.models import State, UtilityPoleLabel
 from utils.mesh_tools import create_quad, normalize_geometry
+
+from .components.crossbar import add_crossbar
+from .components.lamp import add_lamp
+from .components.pole import add_pole
+from .components.signs import add_signs
+from .components.traffic_lights import add_traffic_lights
+from .components.transformer import add_transformer
+from .models import State, UtilityPoleLabel
 
 
 # TODO DELETE ME WHEN DONE
@@ -72,6 +73,7 @@ def generate_utility_pole() -> State:
     add_lamp(state)
     add_transformer(state)
     add_crossbar(state)
+    add_signs(state)
 
     # Scale and rotate everything a bit to give more variation
     # Also normalize the mesh to make sure it's centered and has a unit bounding box
