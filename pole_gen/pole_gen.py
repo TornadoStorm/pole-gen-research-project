@@ -1,6 +1,7 @@
 import numpy as np
+import open3d as o3d
 
-from utils.mesh_tools import create_quad, normalize_mesh
+from utils.mesh_tools import create_quad
 
 from .components.crossbar import add_crossbar
 from .components.lamp import add_lamp
@@ -8,31 +9,24 @@ from .components.pole import add_pole
 from .components.signs import add_signs
 from .components.traffic_lights import add_traffic_lights
 from .components.transformer import add_transformer
-from .models import State, UtilityPoleLabel
+from .models import State
 
 
-# TODO DELETE ME WHEN DONE
-def _add_road_meshes(state: State):
-    road_meshes = []
+def generate_road_meshes(state: State):
+    output = o3d.geometry.TriangleMesh()
     if state.road_presence[0] != 0:
-        road_meshes.append(
-            create_quad(
-                (state.road_presence[0], 0, 0),
-                1 if state.main_road == 0 else 0.5,
-                4 if state.main_road == 0 else 2,
-            )
+        output += create_quad(
+            (state.road_presence[0], 0, 0),
+            1 if state.main_road == 0 else 0.5,
+            4 if state.main_road == 0 else 2,
         )
     if state.road_presence[1] != 0:
-        road_meshes.append(
-            create_quad(
-                (0, state.road_presence[1], 0),
-                4 if state.main_road == 1 else 2,
-                1 if state.main_road == 1 else 0.5,
-            )
+        output += create_quad(
+            (0, state.road_presence[1], 0),
+            4 if state.main_road == 1 else 2,
+            1 if state.main_road == 1 else 0.5,
         )
-
-    for road_mesh in road_meshes:
-        state.add_geometry(road_mesh, UtilityPoleLabel.UNLABELED)
+    return output
 
 
 def generate_utility_pole() -> State:
@@ -67,7 +61,6 @@ def generate_utility_pole() -> State:
         case -1:
             state.rot_indices[1] = 3
 
-    _add_road_meshes(state)
     add_pole(state)
     add_traffic_lights(state)
     add_lamp(state)
@@ -78,16 +71,18 @@ def generate_utility_pole() -> State:
     # Scale and rotate everything a bit to give more variation
     # Also normalize the mesh to make sure it's centered and has a unit bounding box
     state.geometry.scale(np.random.uniform(0.9, 1.1), center=(0, 0, 0))
+    z_rot = np.random.uniform(0, 2 * np.pi)
     state.geometry.rotate(
         state.geometry.get_rotation_matrix_from_xyz(
             (
                 np.deg2rad(np.random.uniform(-3, 3)),
                 np.deg2rad(np.random.uniform(-3, 3)),
-                np.random.uniform(0, 2 * np.pi),
+                z_rot,
             )
         ),
         center=(0, 0, 0),
     )
-    normalize_mesh(state.geometry)
+    state.z_rotation = z_rot
+    # normalize_mesh(state.geometry)
 
     return state

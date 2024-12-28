@@ -45,9 +45,9 @@ def plot_open3d(geometry_list: List):
         paper_bgcolor="rgba(0,0,0,0)",
     )
     fig.update_scenes(
-        xaxis=dict(range=[-0.5, 0.5], autorange=False),
-        yaxis=dict(range=[-0.5, 0.5], autorange=False),
-        zaxis=dict(range=[-0.5, 0.5], autorange=False),
+        xaxis=dict(range=[-10, 10], autorange=False),
+        yaxis=dict(range=[-10, 10], autorange=False),
+        zaxis=dict(range=[0, 20], autorange=False),
         aspectmode="cube",
     )
 
