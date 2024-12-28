@@ -29,4 +29,4 @@ def add_lamp(state: State):
         )
         lamp_mesh.translate([0, 0, lamp_height])
         state.lamp_height = lamp_height
-        state.geometry[lamp_mesh] = UtilityPoleLabel.LAMP
+        state.add_geometry(lamp_mesh, UtilityPoleLabel.LAMP)

@@ -1,6 +1,6 @@
 import numpy as np
 
-from utils.mesh_tools import create_quad, normalize_geometry
+from utils.mesh_tools import create_quad, normalize_mesh
 
 from .components.crossbar import add_crossbar
 from .components.lamp import add_lamp
@@ -32,7 +32,7 @@ def _add_road_meshes(state: State):
         )
 
     for road_mesh in road_meshes:
-        state.geometry[road_mesh] = UtilityPoleLabel.UNLABELED
+        state.add_geometry(road_mesh, UtilityPoleLabel.UNLABELED)
 
 
 def generate_utility_pole() -> State:
@@ -77,17 +77,17 @@ def generate_utility_pole() -> State:
 
     # Scale and rotate everything a bit to give more variation
     # Also normalize the mesh to make sure it's centered and has a unit bounding box
-    random_scale = np.random.uniform(0.9, 1.1)
-    random_rotation = (
-        np.deg2rad(np.random.uniform(-3, 3)),
-        np.deg2rad(np.random.uniform(-3, 3)),
-        np.random.uniform(0, 2 * np.pi),
+    state.geometry.scale(np.random.uniform(0.9, 1.1), center=(0, 0, 0))
+    state.geometry.rotate(
+        state.geometry.get_rotation_matrix_from_xyz(
+            (
+                np.deg2rad(np.random.uniform(-3, 3)),
+                np.deg2rad(np.random.uniform(-3, 3)),
+                np.random.uniform(0, 2 * np.pi),
+            )
+        ),
+        center=(0, 0, 0),
     )
-    for mesh in state.geometry.keys():
-        mesh.scale(random_scale, center=(0, 0, 0))
-        mesh.rotate(
-            mesh.get_rotation_matrix_from_xyz(random_rotation), center=(0, 0, 0)
-        )
-    normalize_geometry(state.geometry.keys())
+    normalize_mesh(state.geometry)
 
     return state

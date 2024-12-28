@@ -20,19 +20,6 @@ def create_quad(
     return mesh
 
 
-def normalize_geometry(geometry: List[o3d.geometry.TriangleMesh]):
-    vertices = np.concatenate([np.asarray(mesh.vertices) for mesh in geometry])
-    min_bounds = vertices.min(axis=0)
-    max_bounds = vertices.max(axis=0)
-    center = (min_bounds + max_bounds) / 2
-    scale = max_bounds - min_bounds
-    for mesh in geometry:
-        vertices = np.asarray(mesh.vertices)
-        vertices -= center
-        vertices /= scale.max()
-        mesh.vertices = o3d.utility.Vector3dVector(vertices)
-
-
 def normalize_mesh(mesh):
     vertices = np.asarray(mesh.vertices)
     min_bounds = vertices.min(axis=0)
@@ -44,8 +31,6 @@ def normalize_mesh(mesh):
     mesh.vertices = o3d.utility.Vector3dVector(vertices)  # Normalize
 
 
-# TODO Center mesh on position
-# TODO Calculate rotation & positon
 def create_cylinder(
     resolution: int,
     base_radius: float,

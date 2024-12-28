@@ -13,7 +13,6 @@ from models.data_source_info import DataSourceInfo, DataSourceInfoEncoder
 from models.dataset import PointCloudDataset
 
 
-# TODO: Augmentations for training data
 class ModelNet40(DataSource):
     URL = "http://modelnet.cs.princeton.edu/ModelNet40.zip"
 

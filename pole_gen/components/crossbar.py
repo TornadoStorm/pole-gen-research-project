@@ -22,7 +22,7 @@ def create_single_crossbar() -> o3d.geometry.TriangleMesh:
 
 
 def add_crossbar(state: State):
-    if any(l == UtilityPoleLabel.CROSSARM for l in state.geometry.values()):
+    if any(l == UtilityPoleLabel.CROSSARM for l in state.triangle_labels):
         return
 
     if np.random.random() > 0.4:
@@ -49,7 +49,7 @@ def add_crossbar(state: State):
                 ca.translate((0, 0, z))
                 ca.rotate(R=r, center=(0, 0, 0))
                 z -= np.random.uniform(0.9, 1.1)
-                state.geometry[ca] = UtilityPoleLabel.CROSSARM
+                state.add_geometry(ca, UtilityPoleLabel.CROSSARM)
 
             # May have one between street lamp and traffic light if they are present
             if (
@@ -73,14 +73,14 @@ def add_crossbar(state: State):
                     )
                 )
                 ca.rotate(R=r, center=(0, 0, 0))
-                state.geometry[ca] = UtilityPoleLabel.CROSSARM
+                state.add_geometry(ca, UtilityPoleLabel.CROSSARM)
         case 1:
             # One big plank on top (up to 0.3m down)
             ca = create_top_crossbar()
             ca.scale(np.random.uniform(0.9, 1.1), center=(0, 0, 0))
             ca.translate((0, 0, state.pole_scaled_height - (np.random.random() * 0.35)))
             ca.rotate(R=r, center=(0, 0, 0))
-            state.geometry[ca] = UtilityPoleLabel.CROSSARM
+            state.add_geometry(ca, UtilityPoleLabel.CROSSARM)
         case 2:
             # Two smalls near top (Like 0.62-0.9m from top)
             ca = create_double_crossbar(1)
@@ -88,7 +88,7 @@ def add_crossbar(state: State):
                 (0, 0, state.pole_scaled_height - np.random.uniform(0.62, 0.9))
             )
             ca.rotate(R=r, center=(0, 0, 0))
-            state.geometry[ca] = UtilityPoleLabel.CROSSARM
+            state.add_geometry(ca, UtilityPoleLabel.CROSSARM)
         case 3:
             # Single on side of (main) road (~1.3-2.9m down)
             ca = create_single_crossbar()
@@ -100,7 +100,7 @@ def add_crossbar(state: State):
                 )
             )
             ca.rotate(R=r, center=(0, 0, 0))
-            state.geometry[ca] = UtilityPoleLabel.CROSSARM
+            state.add_geometry(ca, UtilityPoleLabel.CROSSARM)
         case 4:
             # 3 pairs (~1.2m spacing, ~0.3m down)
             z = state.pole_scaled_height - np.random.uniform(0.25, 0.35)
@@ -111,5 +111,5 @@ def add_crossbar(state: State):
                 ca.translate((0, 0, z))
                 ca.rotate(R=r, center=(0, 0, 0))
                 z -= np.random.uniform(1.1, 1.3)
-                state.geometry[ca] = UtilityPoleLabel.CROSSARM
+                state.add_geometry(ca, UtilityPoleLabel.CROSSARM)
             pass

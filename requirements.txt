@@ -14,3 +14,4 @@ open3d
 matplotlib
 segments-ai
 python-dotenv
+git+https://github.com/brentyi/open3d-stubs.git@install

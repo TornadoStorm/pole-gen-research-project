@@ -31,7 +31,7 @@ def add_signs(state: State):
             ),
             center=(0, 0, 0),
         )
-        state.geometry[mesh] = UtilityPoleLabel.SIGN
+        state.add_geometry(mesh, UtilityPoleLabel.SIGN)
 
     # Tiny square ad
     if np.random.random() <= 0.3:
@@ -53,4 +53,4 @@ def add_signs(state: State):
             ),
             center=(0, 0, 0),
         )
-        state.geometry[mesh] = UtilityPoleLabel.SIGN
+        state.add_geometry(mesh, UtilityPoleLabel.SIGN)

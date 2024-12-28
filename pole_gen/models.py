@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict
+from typing import List
 
 import numpy as np
 import open3d as o3d
@@ -17,7 +17,8 @@ class UtilityPoleLabel(Enum):
 
 
 class State:
-    geometry: Dict[o3d.geometry.TriangleMesh, UtilityPoleLabel]
+    geometry: o3d.geometry.TriangleMesh
+    triangle_labels: np.ndarray
     intersection: bool
     road_presence: list[int]
     main_road: int
@@ -31,7 +32,8 @@ class State:
     lamp_height: float
 
     def __init__(self):
-        self.geometry = {}
+        self.geometry = o3d.geometry.TriangleMesh()
+        self.triangle_labels = np.array([], dtype=object)
         self.intersection = False
         self.road_presence = [0, 0]
         self.main_road = 0
@@ -50,3 +52,8 @@ class State:
             [0, self.pole_scaled_height],
             [self.pole_top_radius, self.pole_base_radius],
         )
+
+    def add_geometry(self, mesh: o3d.geometry.TriangleMesh, label: UtilityPoleLabel):
+        self.geometry += mesh
+        new_labels = np.full(len(mesh.triangles), label, dtype=object)
+        self.triangle_labels = np.concatenate((self.triangle_labels, new_labels))

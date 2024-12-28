@@ -56,7 +56,7 @@ def _add_box_transformer(state: State):
         center=(0, 0, 0),
     )
 
-    state.geometry[box] = UtilityPoleLabel.TRANSFORMER
+    state.add_geometry(box, UtilityPoleLabel.TRANSFORMER)
 
 
 def _create_cylinder_transformer(scale: bool = True):
@@ -100,7 +100,7 @@ def _add_cylinder_transformer(state: State):
         center=(0, 0, 0),
     )
 
-    state.geometry[cylinder] = UtilityPoleLabel.TRANSFORMER
+    state.add_geometry(cylinder, UtilityPoleLabel.TRANSFORMER)
 
 
 def _add_triple_transformer(state: State):
@@ -135,7 +135,7 @@ def _add_triple_transformer(state: State):
             ),
             center=(0, 0, 0),
         )
-        state.geometry[cylinder] = UtilityPoleLabel.TRANSFORMER
+        state.add_geometry(cylinder, UtilityPoleLabel.TRANSFORMER)
 
     end_z = max(z, state.pole_scaled_height - np.random.uniform(0.78, 1.2))
 
@@ -147,7 +147,7 @@ def _add_triple_transformer(state: State):
         ),
         center=(0, 0, 0),
     )
-    state.geometry[crossbar_1] = UtilityPoleLabel.CROSSARM
+    state.add_geometry(crossbar_1, UtilityPoleLabel.CROSSARM)
 
     crossbar_2 = create_double_crossbar(1)
     crossbar_2.translate((0, 0, end_z))
@@ -157,4 +157,4 @@ def _add_triple_transformer(state: State):
         ),
         center=(0, 0, 0),
     )
-    state.geometry[crossbar_2] = UtilityPoleLabel.CROSSARM
+    state.add_geometry(crossbar_2, UtilityPoleLabel.CROSSARM)

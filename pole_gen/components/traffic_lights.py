@@ -36,7 +36,7 @@ def _add_predestrian_light(
         center=(0, 0, 0),
     )
     pedestrian_light_mesh.translate([0, 0, height])
-    state.geometry[pedestrian_light_mesh] = UtilityPoleLabel.PEDESTRIAN_SIGNAL
+    state.add_geometry(pedestrian_light_mesh, UtilityPoleLabel.PEDESTRIAN_SIGNAL)
 
 
 def add_traffic_lights(state: State):
@@ -93,7 +93,7 @@ def add_traffic_lights(state: State):
                     center=(0, 0, 0),
                 )
                 traffic_light_mesh.translate([0, 0, state.traffic_light_heights[i]])
-                state.geometry[traffic_light_mesh] = UtilityPoleLabel.TRAFFIC_LIGHT
+                state.add_geometry(traffic_light_mesh, UtilityPoleLabel.TRAFFIC_LIGHT)
 
             _add_predestrian_light(
                 pedestrian_light_height, i, state, np.random.choice([0, 1])

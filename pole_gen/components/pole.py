@@ -25,4 +25,4 @@ def add_pole(
     if state.pole_scale != 1.0:
         pole_mesh.scale(state.pole_scale, center=(0, 0, 0))
 
-    state.geometry[pole_mesh] = UtilityPoleLabel.POLE
+    state.add_geometry(pole_mesh, UtilityPoleLabel.POLE)
