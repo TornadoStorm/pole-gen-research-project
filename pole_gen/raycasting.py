@@ -1,23 +1,27 @@
+from typing import Tuple
+
 import numpy as np
 import open3d as o3d
 
 from .models import LABEL_COLORS, State, UtilityPoleLabel
 
 
-def scan_geometry(state: State):
+def scan_geometry(
+    state: State,
+    npoints: int = 5000,
+    sensor_pos: Tuple[float, float, float] = (0, 0, 0),
+) -> o3d.geometry.PointCloud:
     scene = o3d.t.geometry.RaycastingScene()
     scene.add_triangles(
         np.asarray(state.geometry.vertices, dtype=np.float32),
         np.asarray(state.geometry.triangles, dtype=np.uint32),
     )
 
-    min_points = 800
-    max_points = 103000
-    sensor_pos = np.array([5, 7, 0])
+    sensor_pos = np.array(sensor_pos)
 
     # Sample random points on the geometry
     pc: o3d.geometry.PointCloud = state.geometry.sample_points_uniformly(
-        number_of_points=np.random.randint(min_points, max_points)
+        number_of_points=npoints
     )
 
     # Raycast to these points and only keep the points that are visible

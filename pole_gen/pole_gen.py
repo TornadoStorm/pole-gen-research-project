@@ -29,7 +29,7 @@ def generate_road_meshes(state: State):
     return output
 
 
-def generate_utility_pole() -> State:
+def generate_utility_pole_mesh() -> State:
     state = State()
 
     # Simulate having a road at a given side (1, -1) or not (0)
