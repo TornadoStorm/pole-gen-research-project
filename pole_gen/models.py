@@ -54,6 +54,7 @@ class State:
     pole_scale: float
     pole_scaled_height: float
     traffic_light_heights: list[float]
+    pedestrian_signal_heights: list[float]
     lamp_height: float
     z_rotation: float
     side_signs: List[Placement]
@@ -72,6 +73,7 @@ class State:
         self.pole_scale = 1.0
         self.pole_scaled_height = 8.45
         self.traffic_light_heights = [0, 0]
+        self.pedestrian_signal_heights = [0, 0]
         self.lamp_height = 0.0
         self.z_rotation = 0.0
         self.side_signs = []

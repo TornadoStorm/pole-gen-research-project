@@ -52,6 +52,7 @@ def add_traffic_lights(state: State):
         _add_predestrian_light(
             pedestrian_light_height, road_index, state, np.random.choice([0, 1])
         )
+        state.pedestrian_signal_heights[road_index] = pedestrian_light_height
     elif np.random.random() <= 0.5:
         # Traffic lights with pedestrian lights
         spawn_chances = [0.4 for _ in state.road_presence]
@@ -98,3 +99,4 @@ def add_traffic_lights(state: State):
             _add_predestrian_light(
                 pedestrian_light_height, i, state, np.random.choice([0, 1])
             )
+            state.pedestrian_signal_heights[i] = pedestrian_light_height

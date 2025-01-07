@@ -1,3 +1,4 @@
+from math import inf
 from typing import List
 
 import numpy as np
@@ -59,13 +60,6 @@ def find_random_free_side_sign_position(
     return None
 
 
-def find_free_normal_sign_position(
-    state: State, sign_height: float, min_z: float, max_z: float
-) -> float:
-    #  TODO Implement
-    return 0.0
-
-
 def _create_side_street_sign(variant: int) -> o3d.geometry.TriangleMesh:
     if variant == 1:
         #  New main road sign, height = 0.4m
@@ -86,7 +80,7 @@ def add_signs(state: State):
         return
 
     # Stop sign (only at intersections)
-    if state.is_intersection and np.random.random() >= 0.3:
+    if state.is_intersection and np.random.random() > 0.7:
         # Rotate towards non-main road (with some randomization)
         r = 90 * state.rot_indices[1 - state.main_road]
         placement = find_random_free_side_sign_position(
@@ -108,11 +102,59 @@ def add_signs(state: State):
             )
             stop_sign_mesh.translate([0, 0, placement.z_position])
             state.add_geometry(stop_sign_mesh, UtilityPoleLabel.SIGN)
+            state.side_signs.append(placement)
 
     # Side street signs
-    if True:
-        side_street_sign = _create_side_street_sign(3)
-        state.add_geometry(side_street_sign, UtilityPoleLabel.SIGN)
+    if state.is_intersection and True:
+        for i in range(np.random.randint(1, 2)):
+            variant = np.random.choice([1, 2, 3])
+            side_street_sign = _create_side_street_sign(variant)
+            z_rot = 90 * np.random.randint(0, 3)
+            sign_height = 0.4 if variant < 3 else 0.12
+
+            bo = (sign_height / 2.0) + 0.1  # Boundary offset
+            ro = 20.0  # Rotation offset
+
+            placement = find_random_free_side_sign_position(
+                state,
+                sign_height,
+                max(
+                    2.9,
+                    (
+                        (max(state.pedestrian_signal_heights) + bo)
+                        if any(l > 0 for l in state.pedestrian_signal_heights)
+                        else -inf
+                    ),  # Below pedestrian signals
+                ),
+                min(
+                    4.2,
+                    (
+                        (min([l for l in state.traffic_light_heights if l > 0]) - bo)
+                        if any(l > 0 for l in state.traffic_light_heights)
+                        else inf
+                    ),  # Below traffic lights
+                    (
+                        (state.lamp_height - bo) if state.lamp_height > 0 else inf
+                    ),  # Below lamps
+                    state.pole_scaled_height - bo,  # Keep below pole
+                ),
+                np.deg2rad(z_rot - ro),
+                np.deg2rad(z_rot + ro),
+            )
+            if placement is not None:
+                # Offset to radius of pole
+                side_street_sign.translate(
+                    [state.pole_radius_at(placement.z_position), 0, 0]
+                )
+                side_street_sign.rotate(
+                    side_street_sign.get_rotation_matrix_from_xyz(
+                        (0, 0, placement.z_rotation)
+                    ),
+                    center=(0, 0, 0),
+                )
+                side_street_sign.translate([0, 0, placement.z_position])
+                state.add_geometry(side_street_sign, UtilityPoleLabel.SIGN)
+                state.side_signs.append(placement)
 
     pass
 
