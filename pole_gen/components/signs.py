@@ -80,7 +80,11 @@ def add_signs(state: State):
         return
 
     # Stop sign (only at intersections)
-    if state.is_intersection and np.random.random() > 0.7:
+    if (
+        state.is_intersection
+        and not state.traffic_light_heights[1 - state.main_road] > 0.0
+        and np.random.random() > 0.7
+    ):
         # Rotate towards non-main road (with some randomization)
         r = 90 * state.rot_indices[1 - state.main_road]
         placement = find_random_free_side_sign_position(
