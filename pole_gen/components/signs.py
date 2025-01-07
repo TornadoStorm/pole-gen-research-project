@@ -1,10 +1,123 @@
+from typing import List
+
 import numpy as np
 import open3d as o3d
 
-from ..models import State, UtilityPoleLabel
+from ..models import Placement, State, UtilityPoleLabel
+
+STOP_SIGN_HEIGHT: float = 1.0
+
+
+def is_free_side_sign_position(state: State, placement: Placement) -> bool:
+    if len(state.side_signs) == 0:
+        return True
+
+    h = placement.height or 0.0
+    h_top = placement.z_position + (h / 2.0)
+    h_bottom = placement.z_position - (h / 2.0)
+
+    # Side signs never overlap in the z-axis
+    if not all(
+        h_bottom >= (sign.z_position + (sign.height or 0.0) / 2.0)
+        or h_top <= (sign.z_position - (sign.height or 0.0) / 2.0)
+        for sign in state.side_signs
+    ):
+        return False
+
+    return True
+
+
+def find_random_free_side_sign_position(
+    state: State,
+    sign_height: float,
+    min_z_position: float,
+    max_z_position: float,
+    min_z_rotation: float,
+    max_z_rotation: float,
+) -> Placement | None:
+    # Check every possible height and angle in random order, without replacement
+    z_pos_list: List[float] = np.linspace(
+        min_z_position,
+        max_z_position,
+        max(1, int((max_z_position - min_z_position) / 0.1)),
+    )
+    np.random.shuffle(z_pos_list)
+
+    z_rot_list: List[float] = np.linspace(
+        min_z_rotation,
+        max_z_rotation,
+        max(1, int(max_z_rotation - min_z_rotation)),
+    )
+
+    for z_pos in z_pos_list:
+        np.random.shuffle(z_rot_list)
+        for z_rot in z_rot_list:
+            placement = Placement(z_pos, z_rot, sign_height)
+            if is_free_side_sign_position(state, placement):
+                return placement
+
+    return None
+
+
+def find_free_normal_sign_position(
+    state: State, sign_height: float, min_z: float, max_z: float
+) -> float:
+    #  TODO Implement
+    return 0.0
+
+
+def _create_side_street_sign(variant: int) -> o3d.geometry.TriangleMesh:
+    if variant == 1:
+        #  New main road sign, height = 0.4m
+        return o3d.io.read_triangle_mesh("pole_gen/meshes/side_street_sign_1.ply")
+    elif variant == 2:
+        #  New side road sign, height = 0.4m
+        return o3d.io.read_triangle_mesh("pole_gen/meshes/side_street_sign_2.ply")
+    else:
+        #  Old sign, height = 0.12m
+        size = (0.76, 0.04, 0.12)
+        mesh = o3d.geometry.TriangleMesh.create_box(size[0], size[1], size[2])
+        mesh.translate([0, -size[1] / 2, -size[2] / 2])
+        return mesh
 
 
 def add_signs(state: State):
+    if np.random.random() > 0.75:
+        return
+
+    # Stop sign (only at intersections)
+    if state.is_intersection and np.random.random() >= 0.3:
+        # Rotate towards non-main road (with some randomization)
+        r = 90 * state.rot_indices[1 - state.main_road]
+        placement = find_random_free_side_sign_position(
+            state,
+            STOP_SIGN_HEIGHT,
+            2.20,
+            2.30,
+            np.deg2rad(r - 7.0),
+            np.deg2rad(r + 7.0),
+        )
+
+        if placement is not None:
+            stop_sign_mesh = o3d.io.read_triangle_mesh("pole_gen/meshes/stop_sign.ply")
+            stop_sign_mesh.rotate(
+                stop_sign_mesh.get_rotation_matrix_from_xyz(
+                    (0, 0, placement.z_rotation)
+                ),
+                center=(0, 0, 0),
+            )
+            stop_sign_mesh.translate([0, 0, placement.z_position])
+            state.add_geometry(stop_sign_mesh, UtilityPoleLabel.SIGN)
+
+    # Side street signs
+    if True:
+        side_street_sign = _create_side_street_sign(3)
+        state.add_geometry(side_street_sign, UtilityPoleLabel.SIGN)
+
+    pass
+
+
+def add_signs_old(state: State):
     if np.random.random() > 0.5:
         return
 
@@ -53,4 +166,5 @@ def add_signs(state: State):
             ),
             center=(0, 0, 0),
         )
+        state.add_geometry(mesh, UtilityPoleLabel.SIGN)
         state.add_geometry(mesh, UtilityPoleLabel.SIGN)

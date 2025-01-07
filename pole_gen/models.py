@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 import open3d as o3d
@@ -28,10 +28,23 @@ LABEL_COLORS = [
 ]
 
 
+class Placement:
+    z_position: float
+    height: float | None
+    z_rotation: float
+
+    def __init__(
+        self, z_position: float, z_rotation: float, height: float | None = None
+    ):
+        self.z_position = z_position
+        self.height = height
+        self.z_rotation = z_rotation
+
+
 class State:
     geometry: o3d.geometry.TriangleMesh
     triangle_labels: np.ndarray
-    intersection: bool
+    is_intersection: bool
     road_presence: list[int]
     main_road: int
     rot_indices: list[int]
@@ -43,11 +56,13 @@ class State:
     traffic_light_heights: list[float]
     lamp_height: float
     z_rotation: float
+    side_signs: List[Placement]
+    normal_signs: List[Placement]
 
     def __init__(self):
         self.geometry = o3d.geometry.TriangleMesh()
         self.triangle_labels = np.array([], dtype=object)
-        self.intersection = False
+        self.is_intersection = False
         self.road_presence = [0, 0]
         self.main_road = 0
         self.rot_indices = [0, 0]
@@ -59,6 +74,8 @@ class State:
         self.traffic_light_heights = [0, 0]
         self.lamp_height = 0.0
         self.z_rotation = 0.0
+        self.side_signs = []
+        self.normal_signs = []
 
     def pole_radius_at(self, height: float) -> float:
         return np.interp(

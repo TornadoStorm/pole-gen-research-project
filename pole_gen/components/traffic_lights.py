@@ -40,7 +40,7 @@ def _add_predestrian_light(
 
 
 def add_traffic_lights(state: State):
-    if not state.intersection:
+    if not state.is_intersection:
         return
 
     if np.random.random() <= 0.2:

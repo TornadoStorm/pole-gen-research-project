@@ -43,7 +43,7 @@ def generate_utility_pole_mesh() -> State:
     )
 
     # Other shared variables
-    state.intersection = len([road for road in state.road_presence if road != 0]) > 1
+    state.is_intersection = len([road for road in state.road_presence if road != 0]) > 1
     state.pole_base_height = 8.45
     state.pole_scale = np.random.uniform(1.0, 1.955)
     state.pole_scaled_height = state.pole_base_height * state.pole_scale
