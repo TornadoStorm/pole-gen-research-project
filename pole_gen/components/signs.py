@@ -75,12 +75,26 @@ def _create_sign(
 def _create_side_sign(
     length: float,
     height: float,
-    thickness: float,
+    thickness: float = 0.04,
     x: float = 0.0,
     y: float = 0.0,
     z: float = 0.0,
     z_rotation: float = 0.0,
 ) -> o3d.geometry.TriangleMesh:
+    """Creates a rectangular side sign mesh.
+
+    Args:
+        length (float): Length of the sign.
+        height (float): Height of the sign.
+        thickness (float, optional): Thickness of the sin. Defaults to 0.04.
+        x (float, optional): Distance from the center of the pole. Defaults to 0.0.
+        y (float, optional): Horizontal offset. Defaults to 0.0.
+        z (float, optional): Vertical position. Defaults to 0.0.
+        z_rotation (float, optional): Z-rotation in radians. Defaults to 0.0.
+
+    Returns:
+        o3d.geometry.TriangleMesh: Procedurally generated side sign mesh.
+    """
     mesh = o3d.geometry.TriangleMesh.create_box(length, thickness, height)
     mesh.translate([x, y - (thickness / 2), z - (height / 2)])
     if z_rotation != 0.0:
@@ -100,7 +114,7 @@ def _create_side_street_sign(variant: int) -> o3d.geometry.TriangleMesh:
         return o3d.io.read_triangle_mesh("pole_gen/meshes/side_street_sign_2.ply")
     else:
         #  Old sign, height = 0.12m
-        return _create_side_sign(length=0.76, height=0.12, thickness=0.04)
+        return _create_side_sign(length=0.76, height=0.12)
 
 
 def _add_stop_sign(state: State):
@@ -267,7 +281,6 @@ def _add_small_rectangular_side_signs(state: State):
         mesh = _create_side_sign(
             length=0.3,
             height=placement.height,
-            thickness=0.03,
             x=state.pole_radius_at(placement.z_position),
             z=placement.z_position,
             z_rotation=placement.z_rotation,
@@ -350,31 +363,28 @@ def _add_rectangular_signs(state: State):
 
         # First placement is random
         if i == 0:
-            possible_rotations = []
-            # FIXME Not rotating towards road when on left side
+            r = 90 * state.rot_indices[state.main_road]
+            possible_rotations = [
+                (np.deg2rad(r), 1),
+                (np.deg2rad(r + 180), -1),
+            ]
             if state.is_intersection:
-                possible_rotations = [
-                    0,
-                    np.deg2rad((90 * state.rot_indices[state.main_road])),
-                    np.deg2rad((180 * state.rot_indices[state.main_road])),
-                    np.deg2rad((270 * state.rot_indices[state.main_road])),
-                ]
-            else:
-                possible_rotations = [
-                    0,
-                    np.deg2rad((180 * state.rot_indices[state.main_road])),
+                r = 90 * state.rot_indices[1 - state.main_road]
+                possible_rotations += [
+                    (np.deg2rad(r), 1),
+                    (np.deg2rad(r + 180), -1),
                 ]
             np.random.shuffle(possible_rotations)
 
-            for z_rot in possible_rotations:
+            for z_rot, rot_dir in possible_rotations:
                 placement = _find_random_free_position(
                     state=state,
                     height=size[1],
                     placement_class=PlacementClass.SIGN,
                     min_z_position=MIN_H,
                     max_z_position=MAX_H,
-                    min_z_rotation=z_rot - np.deg2rad(45),
-                    max_z_rotation=z_rot,
+                    min_z_rotation=z_rot - np.deg2rad(45) if rot_dir == -1 else z_rot,
+                    max_z_rotation=z_rot + np.deg2rad(45) if rot_dir == 1 else z_rot,
                 )
                 if placement is not None:
                     z_rot = placement.z_rotation
@@ -418,8 +428,34 @@ def _add_rectangular_signs(state: State):
 
 
 def _add_large_rectangular_side_signs(state: State):
-    # Size approx (0.4, 0.3) z >= 0.5
-    pass  # TODO Implement
+    if np.random.random() > 0.2:
+        return
+
+    z_rot = np.deg2rad(90 * state.rot_indices[state.main_road])
+    z_rot_var = np.deg2rad(45)
+
+    h = 0.55
+
+    placement = _find_random_free_position(
+        state=state,
+        height=h,
+        placement_class=PlacementClass.SIDE_SIGN,
+        min_z_position=3.0,
+        max_z_position=min(state.pole_scaled_height - (h / 2), 9.0),
+        min_z_rotation=z_rot - z_rot_var,
+        max_z_rotation=z_rot + z_rot_var,
+    )
+
+    if placement is not None:
+        mesh = _create_side_sign(
+            length=0.8,
+            height=placement.height,
+            x=state.pole_radius_at(placement.z_position),
+            z=placement.z_position,
+            z_rotation=placement.z_rotation,
+        )
+        state.add_geometry(mesh, UtilityPoleLabel.SIGN)
+        state.placements[PlacementClass.SIDE_SIGN].append(placement)
 
 
 def add_signs(state: State):
