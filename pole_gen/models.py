@@ -40,6 +40,12 @@ class Placement:
         self.height = height
         self.z_rotation = z_rotation
 
+        while self.z_rotation < 0:
+            self.z_rotation += 2 * np.pi
+
+        while self.z_rotation >= 2 * np.pi:
+            self.z_rotation -= 2 * np.pi
+
 
 class State:
     geometry: o3d.geometry.TriangleMesh

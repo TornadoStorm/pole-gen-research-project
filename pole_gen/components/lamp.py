@@ -3,6 +3,8 @@ import open3d as o3d
 
 from ..models import State, UtilityPoleLabel
 
+# TODO register lamp as side sign
+
 
 def add_lamp(state: State):
     if np.random.random() <= 0.5:

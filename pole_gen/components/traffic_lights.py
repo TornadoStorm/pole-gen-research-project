@@ -3,6 +3,8 @@ import open3d as o3d
 
 from ..models import State, UtilityPoleLabel
 
+# TODO register traffic lights etc. as side signs
+
 # Stinky hack to decide on the pedestrian light model from its context.
 PED_MAP = {
     0: {
