@@ -175,7 +175,7 @@ def _add_small_rectangular_side_signs(state: State):
     z_rot = 0.0
     initial_check_dir = np.random.choice([-1, 1])
 
-    for i in range(np.random.randint(1, 4)):
+    for i in range(np.random.randint(1, 3)):
         h = 0.3 if np.random.random() <= 0.75 else 0.6
 
         # First placement is random
