@@ -1,9 +1,7 @@
 import numpy as np
 import open3d as o3d
 
-from ..models import State, UtilityPoleLabel
-
-# TODO register traffic lights etc. as side signs
+from ..models import Placement, PlacementClass, State, UtilityPoleLabel
 
 # Stinky hack to decide on the pedestrian light model from its context.
 PED_MAP = {
@@ -25,20 +23,20 @@ MIN_PED_H = 2.34
 MAX_PED_H = 2.62
 
 
-def _add_predestrian_light(
-    height: float, road_index: int, state: State, variant: int = 0
-):
+def _add_predestrian_light(z: float, road_index: int, state: State, variant: int = 0):
     pedestrian_light_mesh = o3d.io.read_triangle_mesh(
         f"pole_gen/meshes/pedestrian_traffic_light_{PED_MAP[road_index][(state.road_presence[0], state.road_presence[1])] + (variant * 2)}.ply"
     )
+    z_rot = np.deg2rad(90 * state.rot_indices[road_index] + 180)
     pedestrian_light_mesh.rotate(
-        pedestrian_light_mesh.get_rotation_matrix_from_xyz(
-            (0, 0, np.deg2rad(90 * state.rot_indices[road_index] + 180))
-        ),
+        pedestrian_light_mesh.get_rotation_matrix_from_xyz((0, 0, z_rot)),
         center=(0, 0, 0),
     )
-    pedestrian_light_mesh.translate([0, 0, height])
+    pedestrian_light_mesh.translate([0, 0, z])
     state.add_geometry(pedestrian_light_mesh, UtilityPoleLabel.PEDESTRIAN_SIGNAL)
+    state.placements[PlacementClass.MISC].append(
+        Placement(z_position=z, z_rotation=z_rot, height=1.0)
+    )
 
 
 def add_traffic_lights(state: State):
@@ -102,6 +100,9 @@ def add_traffic_lights(state: State):
                 )
                 traffic_light_mesh.translate([0, 0, z_pos])
                 state.add_geometry(traffic_light_mesh, UtilityPoleLabel.TRAFFIC_LIGHT)
+                state.placements[PlacementClass.MISC].append(
+                    Placement(z_position=z_pos, z_rotation=z_rot, height=1.0)
+                )
 
                 if sign_mesh is not None:
                     sign_mesh.rotate(

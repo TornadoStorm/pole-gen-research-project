@@ -1,19 +1,16 @@
 import numpy as np
 import open3d as o3d
 
-from ..models import State, UtilityPoleLabel
-
-# TODO register lamp as side sign
+from ..models import Placement, PlacementClass, State, UtilityPoleLabel
 
 
 def add_lamp(state: State):
     if np.random.random() <= 0.5:
         lamp_mesh = o3d.io.read_triangle_mesh("pole_gen/meshes/lamp.ply")
         # Rotate to (main) road
+        z_rot = np.deg2rad(90 * state.rot_indices[state.main_road])
         lamp_mesh.rotate(
-            lamp_mesh.get_rotation_matrix_from_xyz(
-                (0, 0, np.deg2rad(90 * state.rot_indices[state.main_road]))
-            ),
+            lamp_mesh.get_rotation_matrix_from_xyz((0, 0, z_rot)),
             center=(0, 0, 0),
         )
         # Randomize rotation
@@ -32,3 +29,6 @@ def add_lamp(state: State):
         lamp_mesh.translate([0, 0, lamp_height])
         state.lamp_height = lamp_height
         state.add_geometry(lamp_mesh, UtilityPoleLabel.LAMP)
+        state.placements[PlacementClass.MISC].append(
+            Placement(z_position=lamp_height, z_rotation=z_rot, height=1.0)
+        )

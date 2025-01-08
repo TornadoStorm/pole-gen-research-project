@@ -4,73 +4,17 @@ from typing import Callable, List
 import numpy as np
 import open3d as o3d
 
-from utils.math import signed_angle_difference
-
-from ..models import Placement, State, UtilityPoleLabel
-
-STOP_SIGN_HEIGHT: float = 1.0
+from ..models import Placement, PlacementClass, State, UtilityPoleLabel
 
 
-def _is_free_side_sign_position(state: State, placement: Placement) -> bool:
-    h = placement.height or 0.0
-    h_top = placement.z_position + (h / 2.0)
-    h_bottom = placement.z_position - (h / 2.0)
-
-    # Side signs never overlap in the z-axis
-    if len(state.side_signs) > 0 and any(
-        h_bottom < (sign.z_position + (sign.height or 0.0) / 2.0)
-        and h_top > (sign.z_position - (sign.height or 0.0) / 2.0)
-        for sign in state.side_signs
-    ):
-        return False
-
-    # Side signs can overlap normal signs, but only if their angle difference is >= 90 degrees
-    if len(state.normal_signs) > 0 and any(
-        h_bottom < (sign.z_position + (sign.height or 0.0) / 2.0)
-        and h_top > (sign.z_position - (sign.height or 0.0) / 2.0)
-        and abs(signed_angle_difference(sign.z_rotation, placement.z_rotation))
-        < np.pi / 2.0
-        for sign in state.normal_signs
-    ):
-        return False
-
-    return True
-
-
-def _is_free_normal_sign_position(state: State, placement: Placement) -> bool:
-    h = placement.height or 0.0
-    h_top = placement.z_position + (h / 2.0)
-    h_bottom = placement.z_position - (h / 2.0)
-
-    # Normal signs never overlap in the z-axis
-    if len(state.normal_signs) > 0 and any(
-        h_bottom < (sign.z_position + (sign.height or 0.0) / 2.0)
-        and h_top > (sign.z_position - (sign.height or 0.0) / 2.0)
-        for sign in state.normal_signs
-    ):
-        return False
-
-    # Normal signs can overlap side signs, but only if their angle difference is >= 90 degrees
-    if len(state.side_signs) > 0 and any(
-        h_bottom < (sign.z_position + (sign.height or 0.0) / 2.0)
-        and h_top > (sign.z_position - (sign.height or 0.0) / 2.0)
-        and abs(signed_angle_difference(sign.z_rotation, placement.z_rotation))
-        < np.pi / 2.0
-        for sign in state.side_signs
-    ):
-        return False
-
-    return True
-
-
-def _find_random_pos(
+def _find_random_free_position(
     state: State,
-    sign_height: float,
+    height: float,
+    placement_class: PlacementClass,
     min_z_position: float,
     max_z_position: float,
     min_z_rotation: float,
     max_z_rotation: float,
-    evaluation_function: Callable[[State, Placement], bool],
 ) -> Placement | None:
     # Check every possible height and angle in random order, without replacement
     z_pos_list: List[float] = np.linspace(
@@ -89,49 +33,11 @@ def _find_random_pos(
     for z_pos in z_pos_list:
         np.random.shuffle(z_rot_list)
         for z_rot in z_rot_list:
-            placement = Placement(z_pos, z_rot, sign_height)
-            if evaluation_function(state, placement):
+            placement = Placement(z_pos, z_rot, height)
+            if state.is_placement_free(placement, placement_class):
                 return placement
 
     return None
-
-
-def _find_random_free_side_sign_position(
-    state: State,
-    sign_height: float,
-    min_z_position: float,
-    max_z_position: float,
-    min_z_rotation: float,
-    max_z_rotation: float,
-) -> Placement | None:
-    return _find_random_pos(
-        state,
-        sign_height,
-        min_z_position,
-        max_z_position,
-        min_z_rotation,
-        max_z_rotation,
-        _is_free_side_sign_position,
-    )
-
-
-def _find_random_free_normal_sign_position(
-    state: State,
-    sign_height: float,
-    min_z_position: float,
-    max_z_position: float,
-    min_z_rotation: float,
-    max_z_rotation: float,
-) -> Placement | None:
-    return _find_random_pos(
-        state,
-        sign_height,
-        min_z_position,
-        max_z_position,
-        min_z_rotation,
-        max_z_rotation,
-        _is_free_normal_sign_position,
-    )
 
 
 def _create_sign(
@@ -157,7 +63,7 @@ def _create_sign(
     """
     thickness = 0.03
     mesh = o3d.geometry.TriangleMesh.create_box(width, thickness, height)
-    mesh.translate([x - (width / 2), thickness + y, z - (height / 2)])
+    mesh.translate([x - (width / 2), y + thickness, z - (height / 2)])
     if z_rotation != 0.0:
         mesh.rotate(
             mesh.get_rotation_matrix_from_xyz((0, 0, z_rotation)),
@@ -209,13 +115,14 @@ def _add_stop_sign(state: State):
 
     # Rotate towards non-main road (with some randomization)
     r = 90 * state.rot_indices[1 - state.main_road]
-    placement = _find_random_free_side_sign_position(
-        state,
-        STOP_SIGN_HEIGHT,
-        2.20,
-        2.30,
-        np.deg2rad(r - 7.0),
-        np.deg2rad(r + 7.0),
+    placement = _find_random_free_position(
+        state=state,
+        height=1.0,
+        placement_class=PlacementClass.SIDE_SIGN,
+        min_z_position=2.20,
+        max_z_position=2.30,
+        min_z_rotation=np.deg2rad(r - 7.0),
+        max_z_rotation=np.deg2rad(r + 7.0),
     )
 
     if placement is not None:
@@ -226,7 +133,7 @@ def _add_stop_sign(state: State):
         )
         stop_sign_mesh.translate([0, 0, placement.z_position])
         state.add_geometry(stop_sign_mesh, UtilityPoleLabel.SIGN)
-        state.side_signs.append(placement)
+        state.placements[PlacementClass.SIDE_SIGN].append(placement)
 
 
 def _add_side_street_signs(state: State):
@@ -242,10 +149,11 @@ def _add_side_street_signs(state: State):
         bo = (sign_height / 2.0) + 0.1  # Boundary offset
         ro = 20.0  # Rotation offset
 
-        placement = _find_random_free_side_sign_position(
-            state,
-            sign_height,
-            max(
+        placement = _find_random_free_position(
+            state=state,
+            height=sign_height,
+            placement_class=PlacementClass.SIDE_SIGN,
+            min_z_position=max(
                 2.9,
                 (
                     (max(state.pedestrian_signal_heights) + bo)
@@ -253,7 +161,7 @@ def _add_side_street_signs(state: State):
                     else -inf
                 ),  # Below pedestrian signals
             ),
-            min(
+            max_z_position=min(
                 4.2,
                 (
                     (min([l for l in state.traffic_light_heights if l > 0]) - bo)
@@ -265,8 +173,8 @@ def _add_side_street_signs(state: State):
                 ),  # Below lamps
                 state.pole_scaled_height - bo,  # Keep below pole
             ),
-            np.deg2rad(z_rot - ro),
-            np.deg2rad(z_rot + ro),
+            min_z_rotation=np.deg2rad(z_rot - ro),
+            max_z_rotation=np.deg2rad(z_rot + ro),
         )
         if placement is not None:
             side_street_sign.translate(
@@ -279,7 +187,7 @@ def _add_side_street_signs(state: State):
                 center=(0, 0, 0),
             )
             state.add_geometry(side_street_sign, UtilityPoleLabel.SIGN)
-            state.side_signs.append(placement)
+            state.placements[PlacementClass.SIDE_SIGN].append(placement)
 
 
 def _add_small_rectangular_side_signs(state: State):
@@ -318,9 +226,10 @@ def _add_small_rectangular_side_signs(state: State):
             rot_diff = np.deg2rad(2)
 
             for z_rot in possible_rotations:
-                placement = _find_random_free_side_sign_position(
+                placement = _find_random_free_position(
                     state=state,
-                    sign_height=h,
+                    height=h,
+                    placement_class=PlacementClass.SIDE_SIGN,
                     min_z_position=MIN_H,
                     max_z_position=MAX_H,
                     min_z_rotation=z_rot - rot_diff,
@@ -342,7 +251,7 @@ def _add_small_rectangular_side_signs(state: State):
                     z_rotation=z_rot,
                     height=h,
                 )
-                if not _is_free_side_sign_position(state, placement):
+                if not state.is_placement_free(placement, PlacementClass.SIDE_SIGN):
                     # Try the other direction
                     placement = None
                     pd *= -1
@@ -357,14 +266,14 @@ def _add_small_rectangular_side_signs(state: State):
 
         mesh = _create_side_sign(
             length=0.3,
-            height=h,
+            height=placement.height,
             thickness=0.03,
             x=state.pole_radius_at(placement.z_position),
             z=placement.z_position,
-            z_rotation=z_rot,
+            z_rotation=placement.z_rotation,
         )
         state.add_geometry(mesh, UtilityPoleLabel.SIGN)
-        state.side_signs.append(placement)
+        state.placements[PlacementClass.SIDE_SIGN].append(placement)
 
 
 def _add_large_rectangular_street_sign(state: State):
@@ -379,9 +288,10 @@ def _add_large_rectangular_street_sign(state: State):
 
     z_rot_deg = 90 * state.rot_indices[state.main_road]
 
-    placement = _find_random_free_normal_sign_position(
+    placement = _find_random_free_position(
         state=state,
-        sign_height=0.4,
+        height=0.4,
+        placement_class=PlacementClass.SIGN,
         min_z_position=4.5,
         max_z_position=5.0,
         min_z_rotation=np.deg2rad(z_rot_deg - 7.0),
@@ -399,11 +309,10 @@ def _add_large_rectangular_street_sign(state: State):
             z_rotation=placement.z_rotation,
         )
         state.add_geometry(mesh, UtilityPoleLabel.SIGN)
-        state.normal_signs.append(placement)
+        state.placements[PlacementClass.SIGN].append(placement)
 
 
-# Available rectangular sign dimensions
-RECTANGULAR_SIGNS = [
+RECTANGULAR_SIGN_SIZES = [
     (1.0, 0.6),
     (0.5, 0.6),
     (0.3, 0.4),
@@ -416,8 +325,96 @@ RECTANGULAR_SIGNS = [
 
 
 def _add_rectangular_signs(state: State):
-    # z_range: [2.4, 0.5]
-    pass  # TODO Implement
+    if np.random.random() > 0.5:
+        return
+
+    MIN_H = 2.4
+    MAX_H = 6.0
+
+    spacing = 0.01
+    min_occupied = inf
+    max_occupied = -inf
+    z_rot = 0.0
+    initial_check_dir = np.random.choice([-1, 1])
+
+    sign_count = np.random.randint(1, 4)
+
+    if sign_count == 2:
+        spacing = np.random.uniform(
+            spacing, 4.0
+        )  # Spacing can vary greatly if only 2 signs are present
+
+    for i in range(sign_count):
+        # Pick from some preset values
+        size = RECTANGULAR_SIGN_SIZES[np.random.randint(0, len(RECTANGULAR_SIGN_SIZES))]
+
+        # First placement is random
+        if i == 0:
+            possible_rotations = []
+            # FIXME Not rotating towards road when on left side
+            if state.is_intersection:
+                possible_rotations = [
+                    0,
+                    np.deg2rad((90 * state.rot_indices[state.main_road])),
+                    np.deg2rad((180 * state.rot_indices[state.main_road])),
+                    np.deg2rad((270 * state.rot_indices[state.main_road])),
+                ]
+            else:
+                possible_rotations = [
+                    0,
+                    np.deg2rad((180 * state.rot_indices[state.main_road])),
+                ]
+            np.random.shuffle(possible_rotations)
+
+            for z_rot in possible_rotations:
+                placement = _find_random_free_position(
+                    state=state,
+                    height=size[1],
+                    placement_class=PlacementClass.SIGN,
+                    min_z_position=MIN_H,
+                    max_z_position=MAX_H,
+                    min_z_rotation=z_rot - np.deg2rad(45),
+                    max_z_rotation=z_rot,
+                )
+                if placement is not None:
+                    z_rot = placement.z_rotation
+                    break
+        else:
+            # Subsequent placements are based on the previous one
+            pd = initial_check_dir
+            for i in range(2):
+                placement = Placement(
+                    z_position=(
+                        max(MIN_H, (min_occupied - ((size[1] / 2.0) + spacing)))
+                        if pd == 1
+                        else min(MAX_H, (max_occupied + ((size[1] / 2.0) + spacing)))
+                    ),
+                    z_rotation=z_rot,
+                    height=size[1],
+                )
+                if not state.is_placement_free(placement, PlacementClass.SIGN):
+                    # Try the other direction
+                    placement = None
+                    pd *= -1
+                else:
+                    break
+
+        if placement is None:
+            break  # Welp, no more space I guess
+
+        min_occupied = min(min_occupied, placement.z_position - (size[1] / 2.0))
+        max_occupied = max(max_occupied, placement.z_position + (size[1] / 2.0))
+
+        mesh = _create_sign(
+            width=size[0],
+            height=placement.height,
+            y=state.pole_radius_at(placement.z_position),
+            z=placement.z_position,
+            z_rotation=placement.z_rotation,
+        )
+
+        state.add_geometry(mesh, UtilityPoleLabel.SIGN)
+        state.placements[PlacementClass.SIGN].append(placement)
 
 
 def _add_large_rectangular_side_signs(state: State):
