@@ -76,7 +76,8 @@ def add_traffic_lights(state: State):
                     traffic_light_mesh = o3d.io.read_triangle_mesh(
                         "pole_gen/meshes/traffic_light_1.ply"
                     )
-                    if np.random.random() <= 0.5:
+                    # Put a sign if it's on main road (50% chance)
+                    if i == state.main_road and np.random.random() <= 1:
                         sign_mesh = o3d.io.read_triangle_mesh(
                             "pole_gen/meshes/traffic_light_1_sign.ply"
                         )
