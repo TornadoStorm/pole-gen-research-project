@@ -80,7 +80,8 @@ def _add_cylinder_transformer(state: State):
                     max(  #  Always above street lamp & traffic lights
                         np.max(state.traffic_light_heights),
                         state.lamp_height,
-                    ),
+                    )
+                    + 2.0,
                     np.random.uniform(9.9, 10.1),
                 ),
             ),
@@ -110,7 +111,8 @@ def _add_triple_transformer(state: State):
             max(  #  Always above street lamp & traffic lights
                 np.max(state.traffic_light_heights),
                 state.lamp_height,
-            ),
+            )
+            + 2.0,
             state.pole_scaled_height - np.random.uniform(4.1, 4.2),
         ),
     )
