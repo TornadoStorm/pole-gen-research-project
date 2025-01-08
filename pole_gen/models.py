@@ -5,7 +5,7 @@ from typing import List, Tuple
 import numpy as np
 import open3d as o3d
 
-from utils.math import signed_angle_difference
+from utils.math import ranges_overlap, signed_angle_difference
 
 
 class UtilityPoleLabel(Enum):
@@ -123,16 +123,23 @@ class State:
             if c == placement_class:
                 for o in self.placements[c]:
                     # Cannot overlap in z
-                    if h_bot < (o.z_position + o.height / 2.0) and h_top > (
-                        o.z_position - o.height / 2.0
+                    if ranges_overlap(
+                        h_bot,
+                        h_top,
+                        o.z_position - o.height / 2.0,
+                        o.z_position + o.height / 2.0,
                     ):
                         return False
             else:
                 for o in self.placements[c]:
                     # Can overlap in z, but only if their relative angles are >= 90 degrees
                     if (
-                        h_bot < (o.z_position + o.height / 2.0)
-                        and h_top > (o.z_position - o.height / 2.0)
+                        ranges_overlap(
+                            h_bot,
+                            h_top,
+                            o.z_position - o.height / 2.0,
+                            o.z_position + o.height / 2.0,
+                        )
                         and abs(
                             signed_angle_difference(o.z_rotation, placement.z_rotation)
                         )
