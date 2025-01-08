@@ -183,15 +183,15 @@ def _add_small_rectangular_side_signs(state: State):
             possible_rotations = []
             if state.is_intersection:
                 possible_rotations = [
-                    np.deg2rad(45),
-                    np.deg2rad((90 * state.rot_indices[state.main_road]) + 45),
-                    np.deg2rad((180 * state.rot_indices[state.main_road]) + 45),
-                    np.deg2rad((270 * state.rot_indices[state.main_road]) + 45),
+                    np.deg2rad(-45),
+                    np.deg2rad((90 * state.rot_indices[state.main_road]) - 45),
+                    np.deg2rad((180 * state.rot_indices[state.main_road]) - 45),
+                    np.deg2rad((270 * state.rot_indices[state.main_road]) - 45),
                 ]
             else:
                 possible_rotations = [
-                    np.deg2rad(45),
-                    np.deg2rad((180 * state.rot_indices[state.main_road]) + 45),
+                    np.deg2rad(-45),
+                    np.deg2rad((180 * state.rot_indices[state.main_road]) - 45),
                 ]
             np.random.shuffle(possible_rotations)
 

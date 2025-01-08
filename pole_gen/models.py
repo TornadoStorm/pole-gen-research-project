@@ -89,7 +89,7 @@ class State:
         return np.interp(
             height,
             [0, self.pole_scaled_height],
-            [self.pole_top_radius, self.pole_base_radius],
+            [self.pole_base_radius, self.pole_top_radius],
         )
 
     def add_geometry(self, mesh: o3d.geometry.TriangleMesh, label: UtilityPoleLabel):
