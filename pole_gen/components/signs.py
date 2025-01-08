@@ -167,10 +167,21 @@ def _create_sign(
 
 
 def _create_side_sign(
-    length: float, height: float, thickness: float
+    length: float,
+    height: float,
+    thickness: float,
+    x: float = 0.0,
+    y: float = 0.0,
+    z: float = 0.0,
+    z_rotation: float = 0.0,
 ) -> o3d.geometry.TriangleMesh:
     mesh = o3d.geometry.TriangleMesh.create_box(length, thickness, height)
-    mesh.translate([0, -thickness / 2, -height / 2])
+    mesh.translate([x, y - (thickness / 2), z - (height / 2)])
+    if z_rotation != 0.0:
+        mesh.rotate(
+            mesh.get_rotation_matrix_from_xyz((0, 0, z_rotation)),
+            center=(0, 0, 0),
+        )
     return mesh
 
 
@@ -344,13 +355,13 @@ def _add_small_rectangular_side_signs(state: State):
         min_occupied = min(min_occupied, placement.z_position - (h / 2.0))
         max_occupied = max(max_occupied, placement.z_position + (h / 2.0))
 
-        mesh = _create_side_sign(length=0.3, height=h, thickness=0.03)
-        mesh.translate(
-            [state.pole_radius_at(placement.z_position), 0, placement.z_position]
-        )
-        mesh.rotate(
-            mesh.get_rotation_matrix_from_xyz((0, 0, z_rot)),
-            center=(0, 0, 0),
+        mesh = _create_side_sign(
+            length=0.3,
+            height=h,
+            thickness=0.03,
+            x=state.pole_radius_at(placement.z_position),
+            z=placement.z_position,
+            z_rotation=z_rot,
         )
         state.add_geometry(mesh, UtilityPoleLabel.SIGN)
         state.side_signs.append(placement)
@@ -363,7 +374,7 @@ def _add_large_rectangular_street_sign(state: State):
     if state.traffic_light_heights[state.main_road] > 0.0:
         return
 
-    if np.random.random() > 0.4:
+    if np.random.random() > 0.3:
         return
 
     z_rot_deg = 90 * state.rot_indices[state.main_road]
@@ -388,6 +399,7 @@ def _add_large_rectangular_street_sign(state: State):
             z_rotation=placement.z_rotation,
         )
         state.add_geometry(mesh, UtilityPoleLabel.SIGN)
+        state.normal_signs.append(placement)
 
 
 # Available rectangular sign dimensions
