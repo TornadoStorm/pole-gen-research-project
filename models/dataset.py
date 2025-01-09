@@ -1,11 +1,13 @@
 from __future__ import print_function
 
+from collections import defaultdict
 from typing import List, Tuple
 
 import numpy as np
 import open3d as o3d
 import torch
 import torch.utils.data as data
+from tqdm.auto import tqdm
 
 
 class PointCloudDataset(data.Dataset):
@@ -14,7 +16,7 @@ class PointCloudDataset(data.Dataset):
     file_paths: List[str]
     """List of file paths to the source files."""
 
-    def __init__(self, file_paths: List[str] = []) -> None:
+    def __init__(self, file_paths: List[str]) -> None:
         self.file_paths = file_paths
 
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
