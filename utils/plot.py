@@ -77,7 +77,7 @@ def plot_cloud(cloud: o3d.t.geometry.PointCloud):
                 if "labels" in cloud.point
                 else points[:, 2]
             ),
-            colorscale="Viridis",
+            colorscale="Rainbow",
             opacity=0.8,
             colorbar=(
                 dict(
