@@ -6,6 +6,8 @@ import plotly.graph_objects as go
 from matplotlib import pyplot as plt
 from open3d.visualization.draw_plotly import get_plotly_fig
 
+from pole_gen.models import UtilityPoleLabel
+
 
 def plot_points(
     points: List[Tuple[float, float, float]], labels: Optional[List[int]] = None
@@ -61,6 +63,7 @@ def plot_open3d(geometry_list: List):
 
 
 def plot_cloud(cloud: o3d.t.geometry.PointCloud):
+    class_names = [label.name for label in UtilityPoleLabel]
     points = cloud.point.positions.numpy()
     scatter = go.Scatter3d(
         x=points[:, 0],
@@ -76,6 +79,15 @@ def plot_cloud(cloud: o3d.t.geometry.PointCloud):
             ),
             colorscale="Viridis",
             opacity=0.8,
+            colorbar=(
+                dict(
+                    title="Class",
+                    tickvals=list(range(len(class_names))),
+                    ticktext=class_names,
+                )
+                if "labels" in cloud.point
+                else None
+            ),
         ),
     )
     layout = go.Layout(
