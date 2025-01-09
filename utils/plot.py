@@ -1,6 +1,8 @@
 from typing import List, Optional, Tuple
 
+import numpy as np
 import open3d as o3d
+import plotly.graph_objects as go
 from matplotlib import pyplot as plt
 from open3d.visualization.draw_plotly import get_plotly_fig
 
@@ -55,4 +57,41 @@ def plot_open3d(geometry_list: List):
         if hasattr(trace, "showscale"):
             trace.update(showscale=False)
 
+    fig.show()
+
+
+def plot_cloud(cloud: o3d.t.geometry.PointCloud):
+    points = cloud.point.positions.numpy()
+    scatter = go.Scatter3d(
+        x=points[:, 0],
+        y=points[:, 1],
+        z=points[:, 2],
+        mode="markers",
+        marker=dict(
+            size=1,
+            color=(
+                cloud.point.labels.numpy().flatten()
+                if "labels" in cloud.point
+                else points[:, 2]
+            ),
+            colorscale="Viridis",
+            opacity=0.8,
+        ),
+    )
+    layout = go.Layout(
+        scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z"),
+        margin=dict(r=0, l=0, b=0, t=0),
+    )
+    fig = go.Figure(data=[scatter], layout=layout)
+    fig.update_layout(
+        template="plotly_dark",
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+    )
+    fig.update_scenes(
+        xaxis=dict(range=[-10, 10], autorange=False),
+        yaxis=dict(range=[-10, 10], autorange=False),
+        zaxis=dict(range=[0, 20], autorange=False),
+        aspectmode="cube",
+    )
     fig.show()

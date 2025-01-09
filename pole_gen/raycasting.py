@@ -10,7 +10,7 @@ def scan_geometry(
     state: State,
     npoints: int = 5000,
     sensor_pos: Tuple[float, float, float] = (0, 0, 0),
-) -> o3d.geometry.PointCloud:
+) -> o3d.t.geometry.PointCloud:
     scene = o3d.t.geometry.RaycastingScene()
     scene.add_triangles(
         np.asarray(state.geometry.vertices, dtype=np.float32),
@@ -36,7 +36,7 @@ def scan_geometry(
     hits = scene.cast_rays(rays)
 
     points = []
-    colors = []
+    labels = []
     for i in range(len(hits["t_hit"])):
         primitive = hits["primitive_ids"][i]
         if primitive == o3d.t.geometry.RaycastingScene.INVALID_ID:
@@ -50,11 +50,17 @@ def scan_geometry(
 
         point = sensor_pos + ray_dirs[i] * float(hits["t_hit"][i].item())
         points.append(point)
-        colors.append(LABEL_COLORS[label.value])
+        labels.append(label.value)
 
-    result = o3d.geometry.PointCloud(
-        o3d.utility.Vector3dVector(np.asarray(points, dtype=np.float32))
+    result = o3d.t.geometry.PointCloud()
+    result.point.positions = o3d.core.Tensor(np.asarray(points, dtype=np.float32))
+    result.point.labels = o3d.core.Tensor(
+        np.asarray(labels, dtype=np.uint32).reshape(-1, 1)
     )
-    result.colors = o3d.utility.Vector3dVector(np.asarray(colors, dtype=np.float32))
+
+    # result = o3d.geometry.PointCloud(
+    #     o3d.utility.Vector3dVector(np.asarray(points, dtype=np.float32))
+    # )
+    # result.colors = o3d.utility.Vector3dVector(np.asarray(colors, dtype=np.float32))
 
     return result
