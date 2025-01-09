@@ -3,13 +3,14 @@ from typing import Tuple
 import numpy as np
 import open3d as o3d
 
-from .models import LABEL_COLORS, State, UtilityPoleLabel
+from .models import State, UtilityPoleLabel
 
 
 def scan_geometry(
     state: State,
     npoints: int = 5000,
     sensor_pos: Tuple[float, float, float] = (0, 0, 0),
+    jitter: float = 0.0,
 ) -> o3d.t.geometry.PointCloud:
     scene = o3d.t.geometry.RaycastingScene()
     scene.add_triangles(
@@ -49,6 +50,10 @@ def scan_geometry(
             continue
 
         point = sensor_pos + ray_dirs[i] * float(hits["t_hit"][i].item())
+        if jitter != 0.0:
+            offset = np.random.normal(size=3)
+            offset = offset / np.linalg.norm(offset) * jitter
+            point += offset
         points.append(point)
         labels.append(label.value)
 
@@ -57,10 +62,5 @@ def scan_geometry(
     result.point.labels = o3d.core.Tensor(
         np.asarray(labels, dtype=np.uint32).reshape(-1, 1)
     )
-
-    # result = o3d.geometry.PointCloud(
-    #     o3d.utility.Vector3dVector(np.asarray(points, dtype=np.float32))
-    # )
-    # result.colors = o3d.utility.Vector3dVector(np.asarray(colors, dtype=np.float32))
 
     return result
