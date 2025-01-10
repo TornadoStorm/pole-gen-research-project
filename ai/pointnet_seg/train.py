@@ -2,12 +2,15 @@ import os
 
 import torch
 from torch.utils.data import DataLoader
+from tqdm.auto import tqdm, trange
+
+from utils.string import format_accuracy
 
 from .data_processing import PointCloudData
 from .model import PointNetSeg
 
 
-def pointNetLoss(ouputs, labels, m3x3, m64x64, alpha=0.0001):
+def pointNetLoss(ouputs, labels, m3x3, m64x64, alpha=0.0001) -> torch.nn.Module:
     criterion = torch.nn.NLLLoss()
     bs = ouputs.size(0)
     id3x3 = torch.eye(3, requires_grad=True).repeat(bs, 1, 1)
@@ -30,12 +33,25 @@ def train(
     epochs: int = 15,
     out_dir: str | None = None,
 ):
-    best_val_acc = -1.0
-    for epoch in range(epochs):
+    if out_dir is not None:
+        os.makedirs(out_dir, exist_ok=True)
+        # Empty the directory
+        for f in os.listdir(out_dir):
+            os.remove(os.path.join(out_dir, f))
+
+    # TODO store loss and accuracy for graph
+
+    for epoch in trange(epochs, desc="Training", unit="epoch", position=0, leave=True):
         pointnet.train()
         running_loss = 0.0
 
-        for i, data in enumerate(train_data, 0):
+        for i, data in tqdm(
+            enumerate(train_data, 0),
+            desc=f"Epoch ${epoch + 1}/{epochs}",
+            unit="batch",
+            position=epoch + 1,
+            leave=True,
+        ):
             inputs, labels = data
             optimizer.zero_grad()
             outputs, m3x3, m64x64 = pointnet(inputs.transpose(1, 2))
@@ -45,7 +61,7 @@ def train(
 
             running_loss += loss.item()
             if i % 10 == 9 or True:
-                print("[%d, %5d] loss: %.3f" % (epoch + 1, i + 1, running_loss / 10))
+                print(f"Epoch {epoch + 1} batch {i + 1} loss: {running_loss / 10}")
                 running_loss = 0.0
 
         pointnet.eval()
@@ -63,16 +79,14 @@ def train(
                 total += labels.size(0) * labels.size(1)
                 correct += (predicted == labels).sum().item()
 
-        print("correct", correct, "/", total)
-        val_acc = 100.0 * correct / total
-        print("Valid accuracy: %d %%" % val_acc)
+        val_acc = correct / total
 
         # Save the model
-        if out_dir is not None and val_acc > best_val_acc:
-            os.makedirs(out_dir, exist_ok=True)
-            best_val_acc = val_acc
-            path = os.path.join(out_dir, "pointnetmodel.pth")
-            print("best_val_acc:", val_acc, "saving model at", path)
+        if out_dir is not None:
+            path = os.path.join(
+                out_dir, f"pointnet_seg_{epoch:03d}_{(val_acc * 100.0):.2f}.pth"
+            )
+            print(f"Epoch {epoch} accuracy: {format_accuracy(val_acc)}")
             torch.save(pointnet.state_dict(), path)
 
 
