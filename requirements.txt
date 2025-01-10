@@ -15,6 +15,3 @@ open3d
 matplotlib
 segments-ai
 python-dotenv
-lightning
-# AI Models
-git+https://github.com/fxia22/pointnet.pytorch.git@master#egg=pointnet

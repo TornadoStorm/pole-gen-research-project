@@ -26,9 +26,7 @@ def generate_data(
         for file in tqdm(os.listdir(out_dir), desc="Clearing output directory"):
             os.remove(os.path.join(out_dir, file))
 
-    if not os.path.exists(out_dir):
-        print("Creating output directory")
-        os.makedirs(out_dir)
+    os.makedirs(out_dir, exist_ok=True)
 
     sample_id = 0  # For filename
 

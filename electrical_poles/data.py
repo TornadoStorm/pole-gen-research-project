@@ -24,9 +24,7 @@ def download_data(
         for file in tqdm(os.listdir(out_dir), desc="Clearing output directory"):
             os.remove(os.path.join(out_dir, file))
 
-    if not os.path.exists(out_dir):
-        print("Creating output directory")
-        os.makedirs(out_dir)
+    os.makedirs(out_dir, exist_ok=True)
 
     sample_uuids = list(
         map(
@@ -50,13 +48,25 @@ def download_data(
 
         # Sample points and labels
         points = np.asarray(pc.points)
-        labels = np.asarray(sample.label.attributes.point_annotations)
+
+        label_map: dict[int, int] = {}
+        label_map[0] = 0
+        for a in sample.label.attributes.annotations:
+            label_map[a.id] = a.category_id
+
+        labels = np.asarray(
+            list(
+                map(
+                    lambda i: (label_map[i]),
+                    sample.label.attributes.point_annotations,
+                )
+            ),
+            dtype=np.uint32,
+        )
 
         out_pc = o3d.t.geometry.PointCloud()
         out_pc.point.positions = o3d.core.Tensor(np.asarray(points, dtype=np.float32))
-        out_pc.point.labels = o3d.core.Tensor(
-            np.asarray(labels, dtype=np.uint32).reshape(-1, 1)
-        )
+        out_pc.point.labels = o3d.core.Tensor(labels.reshape(-1, 1))
 
         out_path: str
         while True:
