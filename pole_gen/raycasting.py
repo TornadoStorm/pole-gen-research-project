@@ -41,13 +41,9 @@ def scan_geometry(
     for i in range(len(hits["t_hit"])):
         primitive = hits["primitive_ids"][i]
         if primitive == o3d.t.geometry.RaycastingScene.INVALID_ID:
-            continue
-
-        primitive = int(primitive.item())
-
-        label: UtilityPoleLabel = state.triangle_labels[primitive]
-        if label == UtilityPoleLabel.UNLABELED:
-            continue
+            label = UtilityPoleLabel.UNLABELED
+        else:
+            label: UtilityPoleLabel = state.triangle_labels[int(primitive.item())]
 
         point = sensor_pos + ray_dirs[i] * float(hits["t_hit"][i].item())
         if jitter != 0.0:

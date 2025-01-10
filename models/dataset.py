@@ -16,18 +16,33 @@ class PointCloudDataset(data.Dataset):
     file_paths: List[str]
     """List of file paths to the source files."""
 
-    def __init__(self, file_paths: List[str]) -> None:
+    n_points: int | None
+
+    def __init__(self, file_paths: List[str], n_points=None) -> None:
         self.file_paths = file_paths
+        self.n_points = n_points
 
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
         file_path = self.file_paths[index]
         pc = o3d.t.io.read_point_cloud(file_path)
+        n = len(pc.point.positions)
 
-        points = torch.from_numpy(pc.point.positions.numpy().astype(np.float32))
+        if self.n_points is not None:
+            indices = np.random.choice(
+                n,
+                self.n_points,
+                replace=n < self.n_points,
+            )
+        else:
+            indices = np.arange(n)
+
+        points = torch.from_numpy(
+            pc.point.positions.numpy()[indices].astype(np.float32)
+        )
         points -= points.mean(dim=0)
         points /= points.abs().max()
 
-        labels = torch.from_numpy(pc.point.labels.numpy().astype(np.uint8))
+        labels = torch.from_numpy(pc.point.labels.numpy()[indices].astype(np.uint8))
 
         return points, labels
 

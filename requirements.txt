@@ -4,6 +4,7 @@ torch==2.0.1+cu117
 -f https://download.pytorch.org/whl/torchvision/
 torchvision==0.15.2+cu117
 tensorboard
+torch-tb-profiler
 # Other requirements
 tqdm
 numpy
@@ -14,4 +15,6 @@ open3d
 matplotlib
 segments-ai
 python-dotenv
-git+https://github.com/brentyi/open3d-stubs.git@install
+lightning
+# AI Models
+git+https://github.com/fxia22/pointnet.pytorch.git@master#egg=pointnet

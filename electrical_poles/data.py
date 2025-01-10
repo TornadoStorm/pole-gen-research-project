@@ -16,7 +16,6 @@ def _pc_data_filename(n: int) -> str:
 
 
 def download_data(
-    n_points: int,
     out_dir: str,
     clear_dir: bool = True,
 ):
@@ -50,14 +49,8 @@ def download_data(
         )
 
         # Sample points and labels
-        indices = np.random.choice(
-            len(pc.points),
-            n_points,
-            replace=len(pc.points) < n_points,
-        )
-
-        points = np.asarray(pc.points)[indices]
-        labels = np.asarray(sample.label.attributes.point_annotations)[indices]
+        points = np.asarray(pc.points)
+        labels = np.asarray(sample.label.attributes.point_annotations)
 
         out_pc = o3d.t.geometry.PointCloud()
         out_pc.point.positions = o3d.core.Tensor(np.asarray(points, dtype=np.float32))

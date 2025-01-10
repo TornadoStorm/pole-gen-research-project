@@ -178,3 +178,5 @@ data/
 *.prof
 
 segments/
+
+lightning_logs/
