@@ -30,7 +30,12 @@ def plot_open3d(geometry_list: List):
     fig.show()
 
 
-def plot_cloud(cloud: o3d.t.geometry.PointCloud):
+def plot_cloud(
+    cloud: o3d.t.geometry.PointCloud,
+    xaxis: List[float] = [-10, 10],
+    yaxis: List[float] = [-10, 10],
+    zaxis: List[float] = [0, 20],
+):
     class_names = [label.name for label in UtilityPoleLabel]
     points = cloud.point.positions.numpy()
     scatter = go.Scatter3d(
@@ -69,9 +74,9 @@ def plot_cloud(cloud: o3d.t.geometry.PointCloud):
         paper_bgcolor="rgba(0,0,0,0)",
     )
     fig.update_scenes(
-        xaxis=dict(range=[-10, 10], autorange=False),
-        yaxis=dict(range=[-10, 10], autorange=False),
-        zaxis=dict(range=[0, 20], autorange=False),
+        xaxis=dict(range=xaxis, autorange=False),
+        yaxis=dict(range=yaxis, autorange=False),
+        zaxis=dict(range=zaxis, autorange=False),
         aspectmode="cube",
     )
     fig.show()

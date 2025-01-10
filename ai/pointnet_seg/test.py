@@ -7,16 +7,15 @@ from utils.string import format_accuracy
 from .model import PointNetSeg
 
 
-def test(model: PointNetSeg, dataloader: DataLoader):
+def test(model: PointNetSeg, test_data: DataLoader):
     model.eval()
     correct: int = 0
     total: int = 0
 
     with torch.no_grad():
-        for data in tqdm(dataloader, dec="Testing"):
+        for data in tqdm(test_data, desc="Testing", total=len(test_data)):
             inputs, labels = data
             inputs = inputs.float()
-            labels = labels
             outputs, __, __ = model(inputs.transpose(1, 2))
             _, predicted = torch.max(outputs.data, 1)
 
