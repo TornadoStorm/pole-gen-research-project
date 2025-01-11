@@ -19,6 +19,7 @@ def download_data(
     out_dir: str,
     clear_dir: bool = True,
     include_unlabeled: bool = False,
+    n_points: int | None = None,
 ):
     # Delete directory if it already exists
     if clear_dir and os.path.exists(out_dir):
@@ -65,6 +66,13 @@ def download_data(
             mask = labels != 0
             points = points[mask]
             labels = labels[mask]
+
+        # Sample points
+        if n_points is not None:
+            n = len(points)
+            indices = np.random.choice(n, n_points, replace=n_points > n)
+            points = points[indices]
+            labels = labels[indices]
 
         out_pc = o3d.t.geometry.PointCloud()
         out_pc.point.positions = o3d.core.Tensor(np.asarray(points, dtype=np.float32))

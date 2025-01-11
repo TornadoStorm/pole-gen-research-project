@@ -36,7 +36,9 @@ def generate_data(
         a = np.random.uniform(0, 2 * np.pi)
         x = r * np.cos(a)
         y = r * np.sin(a)
-        pc = scan_geometry(state, npoints=n_points, sensor_pos=(x, y, 1), jitter=jitter)
+        pc = scan_geometry(
+            state, n_points=n_points, sensor_pos=(x, y, 1), jitter=jitter
+        )
         out_path: str
         while True:
             out_path = os.path.join(out_dir, _pc_data_filename(sample_id))

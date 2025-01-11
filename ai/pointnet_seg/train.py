@@ -37,12 +37,12 @@ def pointNetLoss(preds, labels, alpha=0.0001) -> torch.nn.Module:
     ) / float(bs)
 
 
+# TODO checkpoint saving & tensorboard integration
 def train(
     model: PointNetSeg,
     train_dataset: torch.utils.data.Dataset,
     eval_dataset: torch.utils.data.Dataset,
     epochs: int = 15,
-    out_dir: str | None = None,
     batch_size: int = 32,
     num_workers: int = 4,
 ):
@@ -68,5 +68,3 @@ def train(
     )
 
     learn.fit(epochs)
-
-    learn.show_results()

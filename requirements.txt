@@ -12,7 +12,7 @@ pandas
 plyfile
 requests
 open3d
-matplotlib
+plotly
 segments-ai
 python-dotenv
 fastai

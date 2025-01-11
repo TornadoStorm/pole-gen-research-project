@@ -20,7 +20,9 @@ class PointCloudDataset(data.Dataset):
     n_points: int | None
     n_classes: int
 
-    def __init__(self, file_paths: List[str], n_points: int, n_classes: int) -> None:
+    def __init__(
+        self, file_paths: List[str], n_classes: int, n_points: int | None = None
+    ) -> None:
         self.file_paths = file_paths
         self.n_points = n_points
         self.n_classes = n_classes
@@ -28,26 +30,12 @@ class PointCloudDataset(data.Dataset):
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
         file_path = self.file_paths[index]
         pc = o3d.t.io.read_point_cloud(file_path)
-        n = len(pc.point.positions)
 
-        if self.n_points is not None:
-            indices = np.random.choice(
-                n,
-                self.n_points,
-                replace=n < self.n_points,
-            )
-        else:
-            indices = np.arange(n)
-
-        points = torch.from_numpy(
-            pc.point.positions.numpy()[indices].astype(np.float32)
-        )
+        points = torch.from_numpy(pc.point.positions.numpy().astype(np.float32))
         points -= points.mean(dim=0)
         points /= points.abs().max()
 
-        labels = torch.from_numpy(
-            pc.point.labels.numpy()[indices].squeeze().astype(np.int64)
-        )
+        labels = torch.from_numpy(pc.point.labels.numpy().squeeze().astype(np.int64))
 
         return points, labels
 
@@ -58,7 +46,7 @@ class PointCloudDataset(data.Dataset):
         for i in trange(len(self), desc="Checking dataset..."):
             sample = self[i]
             n = len(sample[0].numpy())
-            if n != self.n_points:
+            if self.n_points != None and n != self.n_points:
                 warnings.warn(
                     f"A sample has {n} points (Expected {self.n_points}). Check if the data was generated correctly!"
                 )

@@ -1,16 +1,15 @@
-from typing import List, Optional, Tuple
+from typing import List
 
-import numpy as np
 import open3d as o3d
 import plotly.graph_objects as go
-from matplotlib import pyplot as plt
-from open3d.visualization.draw_plotly import get_plotly_fig
 
 from pole_gen.models import UtilityPoleLabel
 
 
 def plot_open3d(geometry_list: List):
-    fig = get_plotly_fig(geometry_list, mesh_show_wireframe=True)
+    fig = o3d.visualization.draw_plotly.get_plotly_fig(
+        geometry_list, mesh_show_wireframe=True
+    )
     fig.update_layout(
         template="plotly_dark",
         plot_bgcolor="rgba(0,0,0,0)",
