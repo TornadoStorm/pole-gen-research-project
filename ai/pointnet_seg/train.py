@@ -45,7 +45,7 @@ def train(
     epochs: int = 15,
     batch_size: int = 32,
     num_workers: int = 4,
-    log_dir: str = "data/logs",
+    model_path: str = "pointnet_seg",
 ):
     learn = Learner(
         DataLoaders(
@@ -66,7 +66,7 @@ def train(
         loss_func=pointNetLoss,
         opt_func=Adam,
         metrics=[accuracy, iou],
-        cbs=[ShowGraphCallback()],
+        cbs=[ShowGraphCallback(), SaveModelCallback(fname=model_path)],
     )
 
     learn.fit(epochs)

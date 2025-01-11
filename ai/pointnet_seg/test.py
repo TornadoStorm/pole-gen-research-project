@@ -16,7 +16,7 @@ def test(model: PointNetSeg, test_data: DataLoader):
         for data in tqdm(test_data, desc="Testing", total=len(test_data)):
             inputs, labels = data
             inputs = inputs.float()
-            outputs, __, __ = model(inputs.transpose(1, 2))
+            outputs, __, __ = model(inputs)
             _, predicted = torch.max(outputs.data, 1)
 
             total += labels.size(0) * labels.size(1)
