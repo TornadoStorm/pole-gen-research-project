@@ -66,6 +66,7 @@ def train(
         loss_func=pointNetLoss,
         opt_func=Adam,
         metrics=[accuracy, iou],
+        cbs=[ShowGraphCallback()],
     )
 
     learn.fit(epochs)
