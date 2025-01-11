@@ -7,6 +7,7 @@ from utils.string import format_accuracy
 from .model import PointNetSeg
 
 
+# TODO More metrics
 def test(model: PointNetSeg, test_data: DataLoader):
     model.eval()
     correct: int = 0

@@ -40,7 +40,6 @@ def _find_random_free_position(
     return None
 
 
-# TODO Change this to align with side sign so the rotation calculations are consistent
 def _create_sign(
     width: float,
     height: float,

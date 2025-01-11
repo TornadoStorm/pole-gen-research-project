@@ -1,15 +1,16 @@
+from collections import defaultdict
 from typing import List
 
 import open3d as o3d
+import pandas as pd
 import plotly.graph_objects as go
+from open3d.visualization.draw_plotly import get_plotly_fig  # type: ignore
 
 from pole_gen.models import UtilityPoleLabel
 
 
 def plot_open3d(geometry_list: List):
-    fig = o3d.visualization.draw_plotly.get_plotly_fig(
-        geometry_list, mesh_show_wireframe=True
-    )
+    fig = get_plotly_fig(geometry_list, mesh_show_wireframe=True)
     fig.update_layout(
         template="plotly_dark",
         plot_bgcolor="rgba(0,0,0,0)",
@@ -79,3 +80,31 @@ def plot_cloud(
         aspectmode="cube",
     )
     fig.show()
+
+
+def plot_history(history: pd.DataFrame):
+    x_values = history.iloc[:, 0]  # First column is epoch
+
+    data: defaultdict[str, list] = defaultdict(list)
+
+    for column in history.columns[1:-1]:
+        k: str
+        name: str
+
+        if "_" in column:
+            # Group by {dataset}_{metric}
+            dataset, metric = column.split("_")
+            k = metric
+            name = dataset
+        else:
+            # Single metric
+            k = name = column
+
+        data[k].append(
+            go.Scatter(x=x_values, y=history[column], mode="lines", name=name)
+        )
+
+    for k in data.keys():
+        fig = go.Figure(data=data[k])
+        fig.update_layout(yaxis_title=k.capitalize(), xaxis_title="Epoch")
+        fig.show()

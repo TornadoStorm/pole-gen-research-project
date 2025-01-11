@@ -37,7 +37,6 @@ def pointNetLoss(preds, labels, alpha=0.0001) -> torch.nn.Module:
     ) / float(bs)
 
 
-# TODO checkpoint saving & statistics logging
 def train(
     model: PointNetSeg,
     train_dataset: torch.utils.data.Dataset,
@@ -45,7 +44,8 @@ def train(
     epochs: int = 15,
     batch_size: int = 32,
     num_workers: int = 4,
-    model_path: str = "pointnet_seg",
+    model_path: str = "pointnet_seg/bestmodel",
+    log_path: str = "pointnet_seg/log.csv",
 ):
     learn = Learner(
         DataLoaders(
@@ -66,7 +66,11 @@ def train(
         loss_func=pointNetLoss,
         opt_func=Adam,
         metrics=[accuracy, iou],
-        cbs=[ShowGraphCallback(), SaveModelCallback(fname=model_path)],
+        cbs=[
+            ShowGraphCallback(),
+            SaveModelCallback(fname=model_path),
+            CSVLogger(fname=log_path),
+        ],
     )
 
     learn.fit(epochs)
