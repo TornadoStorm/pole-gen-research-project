@@ -2,6 +2,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from sklearn.metrics import jaccard_score
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 
@@ -128,3 +129,33 @@ class PointNetSeg(nn.Module):
         x = self.mlp3(x)
         output = self.conv(x)
         return self.logsoftmax(output), matrix3x3, matrix64x64
+
+    @classmethod
+    def accuracy(cls, preds, labels):
+        outputs, _, _ = preds
+        preds = outputs.argmax(dim=1).cpu().numpy()
+        labels = labels.cpu().numpy()
+        return (preds == labels).mean()
+
+    @classmethod
+    def iou(cls, preds, labels):
+        outputs, _, _ = preds
+        preds = outputs.argmax(dim=1).cpu().numpy()
+        labels = labels.cpu().numpy()
+        return jaccard_score(preds.flatten(), labels.flatten(), average="macro")
+
+    @classmethod
+    def loss(cls, preds, labels, alpha=0.0001) -> torch.nn.Module:
+        outputs, m3x3, m64x64 = preds
+        criterion = torch.nn.NLLLoss()
+        bs = outputs.size(0)
+        id3x3 = torch.eye(3, requires_grad=True).repeat(bs, 1, 1)
+        id64x64 = torch.eye(64, requires_grad=True).repeat(bs, 1, 1)
+        if outputs.is_cuda:
+            id3x3 = id3x3.cuda()
+            id64x64 = id64x64.cuda()
+        diff3x3 = id3x3 - torch.bmm(m3x3, m3x3.transpose(1, 2))
+        diff64x64 = id64x64 - torch.bmm(m64x64, m64x64.transpose(1, 2))
+        return criterion(outputs, labels) + alpha * (
+            torch.norm(diff3x3) + torch.norm(diff64x64)
+        ) / float(bs)

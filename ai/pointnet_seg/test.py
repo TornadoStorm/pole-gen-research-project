@@ -10,18 +10,22 @@ from .model import PointNetSeg
 # TODO More metrics
 def test(model: PointNetSeg, test_data: DataLoader):
     model.eval()
-    correct: int = 0
-    total: int = 0
+
+    acc = 0.0
+    iou = 0.0
+    num_batches = len(test_data)
 
     with torch.no_grad():
-        for data in tqdm(test_data, desc="Testing", total=len(test_data)):
+        for data in tqdm(test_data, desc="Testing", total=num_batches):
             inputs, labels = data
             inputs = inputs.float()
-            outputs, __, __ = model(inputs)
-            _, predicted = torch.max(outputs.data, 1)
+            preds = model(inputs)
 
-            total += labels.size(0) * labels.size(1)
-            correct += (predicted == labels).sum().item()
+            acc += model.accuracy(preds, labels)
+            iou += model.iou(preds, labels)
 
-    accuracy: float = correct / total
-    print(f"Test accuracy: {format_accuracy(accuracy)}")
+    acc /= num_batches
+    iou /= num_batches
+
+    print(f"Accuracy: {format_accuracy(acc)}")
+    print(f"IoU: {iou}")
