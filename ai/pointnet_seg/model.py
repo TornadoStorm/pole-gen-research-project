@@ -121,7 +121,7 @@ class PointNetSeg(nn.Module):
         self.logsoftmax = nn.LogSoftmax(dim=1)
 
     def forward(self, input):
-        inputs, matrix3x3, matrix64x64 = self.pointnet(input)
+        inputs, matrix3x3, matrix64x64 = self.pointnet(input.transpose(1, 2))
         stack = torch.cat(inputs, 1)
         x = self.mlp1(stack)
         x = self.mlp2(x)

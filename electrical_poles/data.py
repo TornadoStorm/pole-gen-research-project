@@ -18,6 +18,7 @@ def _pc_data_filename(n: int) -> str:
 def download_data(
     out_dir: str,
     clear_dir: bool = True,
+    include_unlabeled: bool = False,
 ):
     # Delete directory if it already exists
     if clear_dir and os.path.exists(out_dir):
@@ -55,14 +56,15 @@ def download_data(
             label_map[a.id] = a.category_id
 
         labels = np.asarray(
-            list(
-                map(
-                    lambda i: (label_map[i]),
-                    sample.label.attributes.point_annotations,
-                )
-            ),
+            [label_map[i] for i in sample.label.attributes.point_annotations],
             dtype=np.uint32,
         )
+
+        # Remove points with label 0 if include_unlabeled is False
+        if not include_unlabeled:
+            mask = labels != 0
+            points = points[mask]
+            labels = labels[mask]
 
         out_pc = o3d.t.geometry.PointCloud()
         out_pc.point.positions = o3d.core.Tensor(np.asarray(points, dtype=np.float32))
