@@ -1,10 +1,9 @@
 # pyTorch imports
+import pytorch_lightning as L
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from sklearn.metrics import jaccard_score
-from torch.utils.data import DataLoader, Dataset
-from torchvision import transforms
 
 
 # Multi Layer Perceptron
@@ -111,15 +110,17 @@ class PointNet(nn.Module):
         )
 
 
-class PointNetSeg(nn.Module):
-    def __init__(self, classes=3):
+class PointNetSeg(L.LightningModule):
+    def __init__(self, n_classes: int):
         super().__init__()
         self.pointnet = PointNet()
         self.mlp1 = MLP_CONV(1088, 512)
         self.mlp2 = MLP_CONV(512, 256)
         self.mlp3 = MLP_CONV(256, 128)
-        self.conv = nn.Conv1d(128, classes, 1)
+        self.conv = nn.Conv1d(128, n_classes, 1)
         self.logsoftmax = nn.LogSoftmax(dim=1)
+        self.criterion = torch.nn.NLLLoss()
+        self.save_hyperparameters()
 
     def forward(self, input):
         inputs, matrix3x3, matrix64x64 = self.pointnet(input.transpose(1, 2))
@@ -130,24 +131,43 @@ class PointNetSeg(nn.Module):
         output = self.conv(x)
         return self.logsoftmax(output), matrix3x3, matrix64x64
 
-    @classmethod
-    def accuracy(cls, preds, labels):
-        outputs, _, _ = preds
-        preds = outputs.argmax(dim=1).cpu().numpy()
-        labels = labels.cpu().numpy()
-        return (preds == labels).mean()
+    def training_step(self, batch, batch_idx):
+        input, labels = batch
+        preds = self(input)
+        loss = self.loss(preds, labels)
+        self.log("train_loss", loss, prog_bar=True)
+        return loss
 
-    @classmethod
-    def iou(cls, preds, labels):
-        outputs, _, _ = preds
-        preds = outputs.argmax(dim=1).cpu().numpy()
-        labels = labels.cpu().numpy()
-        return jaccard_score(preds.flatten(), labels.flatten(), average="macro")
+    def validation_step(self, batch, batch_idx):
+        self.log_stats(batch, batch_idx, "val")
 
-    @classmethod
-    def loss(cls, preds, labels, alpha=0.0001) -> torch.nn.Module:
+    def test_step(self, batch, batch_idx):
+        self.log_stats(batch, batch_idx, "test")
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
+        return optimizer
+
+    # ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤
+    # ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ Utility functions ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤
+    # ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤
+
+    def log_stats(self, batch, batch_idx, prefix):
+        input, labels = batch
+        preds = self(input)
+        loss = self.loss(preds, labels)
+        acc = self.accuracy(preds, labels)
+        iou = self.iou(preds, labels)
+        self.log_dict(
+            {
+                f"{prefix}_loss": loss,
+                f"{prefix}_acc": acc,
+                f"{prefix}_iou": iou,
+            }
+        )
+
+    def loss(self, preds, labels, alpha=0.0001):
         outputs, m3x3, m64x64 = preds
-        criterion = torch.nn.NLLLoss()
         bs = outputs.size(0)
         id3x3 = torch.eye(3, requires_grad=True).repeat(bs, 1, 1)
         id64x64 = torch.eye(64, requires_grad=True).repeat(bs, 1, 1)
@@ -156,6 +176,18 @@ class PointNetSeg(nn.Module):
             id64x64 = id64x64.cuda()
         diff3x3 = id3x3 - torch.bmm(m3x3, m3x3.transpose(1, 2))
         diff64x64 = id64x64 - torch.bmm(m64x64, m64x64.transpose(1, 2))
-        return criterion(outputs, labels) + alpha * (
+        return self.criterion(outputs, labels) + alpha * (
             torch.norm(diff3x3) + torch.norm(diff64x64)
         ) / float(bs)
+
+    def accuracy(self, preds, labels):
+        outputs, _, _ = preds
+        preds = outputs.argmax(dim=1).cpu().numpy()
+        labels = labels.cpu().numpy()
+        return (preds == labels).mean()
+
+    def iou(self, preds, labels):
+        outputs, _, _ = preds
+        preds = outputs.argmax(dim=1).cpu().numpy()
+        labels = labels.cpu().numpy()
+        return jaccard_score(preds.flatten(), labels.flatten(), average="macro")

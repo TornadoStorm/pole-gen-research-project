@@ -15,5 +15,4 @@ open3d
 plotly
 segments-ai
 python-dotenv
-fastai
-accelerate
+lightning
