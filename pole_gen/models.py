@@ -1,6 +1,6 @@
 from collections import defaultdict
 from enum import Enum
-from typing import List, Tuple
+from typing import DefaultDict, List
 
 import numpy as np
 import open3d as o3d
@@ -58,19 +58,19 @@ class State:
     geometry: o3d.geometry.TriangleMesh
     triangle_labels: np.ndarray
     is_intersection: bool
-    road_presence: list[int]
+    road_presence: List[int]
     main_road: int
-    rot_indices: list[int]
+    rot_indices: List[int]
     pole_base_radius: float
     pole_top_radius: float
     pole_base_height: float
     pole_scale: float
     pole_scaled_height: float
-    traffic_light_heights: list[float]
-    pedestrian_signal_heights: list[float]
+    traffic_light_heights: List[float]
+    pedestrian_signal_heights: List[float]
     lamp_height: float
     z_rotation: float
-    placements: defaultdict[PlacementClass, List[Placement]]
+    placements: DefaultDict[PlacementClass, List[Placement]]
 
     def __init__(self):
         self.geometry = o3d.geometry.TriangleMesh()

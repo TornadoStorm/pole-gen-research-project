@@ -1,7 +1,6 @@
 from __future__ import print_function
 
 import warnings
-from collections import defaultdict
 from typing import List, Tuple
 
 import numpy as np
