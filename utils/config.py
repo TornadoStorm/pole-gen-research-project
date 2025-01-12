@@ -17,12 +17,18 @@ SEED: int = config.get("seed", 42)
 ts = config.get("train_data", {})
 TRAIN_DATA_SIZE: int = ts.get("size", 65536)
 TRAIN_DATA_PATH: str = ts.get("path", "data/train")
+TRAIN_DATA_BATCH_SIZE: int = ts.get("batch_size", 32)
+TRAIN_DATA_WORKERS: int = ts.get("workers", 4)
 
 ts = config.get("test_data", {})
 TEST_DATA_PATH: str = ts.get("path", "data/test")
+TEST_DATA_BATCH_SIZE: int = ts.get("batch_size", 32)
+TEST_DATA_WORKERS: int = ts.get("workers", 4)
 
 ts = config.get("valid_data", {})
 VALID_DATA_SPLIT: float = ts.get("split", 0.2)
+VALID_DATA_BATCH_SIZE: int = ts.get("batch_size", 32)
+VALID_DATA_WORKERS: int = ts.get("workers", 4)
 
 ts = config.get("train", {})
 TRAIN_EPOCHS: int = ts.get("epochs", 100)

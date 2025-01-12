@@ -58,9 +58,9 @@ train_dataset = PointCloudDataset(
 )
 train_dataloader = DataLoader(
     train_dataset,
-    batch_size=32,
+    batch_size=TRAIN_DATA_BATCH_SIZE,
     shuffle=True,
-    num_workers=4,
+    num_workers=TRAIN_DATA_WORKERS,
     persistent_workers=True,
 )
 
@@ -98,17 +98,17 @@ test_dataset, valid_dataset = torch.utils.data.random_split(
 
 test_dataloader = DataLoader(
     test_dataset,
-    batch_size=32,
+    batch_size=TEST_DATA_BATCH_SIZE,
     shuffle=False,
-    num_workers=4,
+    num_workers=TEST_DATA_WORKERS,
     persistent_workers=True,
 )
 
 valid_dataloader = DataLoader(
     valid_dataset,
-    batch_size=32,
+    batch_size=VALID_DATA_BATCH_SIZE,
     shuffle=False,
-    num_workers=4,
+    num_workers=VALID_DATA_WORKERS,
     persistent_workers=True,
 )
 
