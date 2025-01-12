@@ -1,0 +1,17 @@
+n_points: 1024
+seed: 42
+
+train_data:
+  size: 65536
+  path: data/train
+
+test_data:
+  path: data/test
+
+valid_data:
+  split: 0.2
+
+train:
+  epochs: 100
+  path: data/pointnet
+  best_model_path: data/pointnet/best_model.pth

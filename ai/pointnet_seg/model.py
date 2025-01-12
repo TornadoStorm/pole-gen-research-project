@@ -46,11 +46,11 @@ class TNet(nn.Module):
 
         self.fc3 = nn.Linear(256, k * k)
 
-    def forward(self, input):
+    def forward(self, x):
         # input.shape == (batch_size,n,3)
 
-        bs = input.size(0)
-        xb = self.mlp1(input)
+        bs = x.size(0)
+        xb = self.mlp1(x)
         xb = self.mlp2(xb)
         xb = self.mlp3(xb)
 
@@ -61,9 +61,7 @@ class TNet(nn.Module):
         xb = self.fc_bn2(xb)
 
         # initialize as identity
-        init = torch.eye(self.k, requires_grad=True).repeat(bs, 1, 1)
-        if xb.is_cuda:
-            init = init.cuda()
+        init = torch.eye(self.k, requires_grad=True).repeat(bs, 1, 1).to(x)
         matrix = self.fc3(xb).view(-1, self.k, self.k) + init
         return matrix
 
@@ -139,10 +137,18 @@ class PointNetSeg(L.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        self.log_stats(batch, batch_idx, "val")
+        input, labels = batch
+        preds = self(input)
+        self.log("val_loss", self.loss(preds, labels))
+        self.log("val_acc", self.accuracy(preds, labels))
+        self.log("val_iou", self.iou(preds, labels))
 
     def test_step(self, batch, batch_idx):
-        self.log_stats(batch, batch_idx, "test")
+        input, labels = batch
+        preds = self(input)
+        self.log("test_loss", self.loss(preds, labels))
+        self.log("test_acc", self.accuracy(preds, labels))
+        self.log("test_iou", self.iou(preds, labels))
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
@@ -152,28 +158,11 @@ class PointNetSeg(L.LightningModule):
     # ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ Utility functions ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤
     # ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤ ◢◤
 
-    def log_stats(self, batch, batch_idx, prefix):
-        input, labels = batch
-        preds = self(input)
-        loss = self.loss(preds, labels)
-        acc = self.accuracy(preds, labels)
-        iou = self.iou(preds, labels)
-        self.log_dict(
-            {
-                f"{prefix}_loss": loss,
-                f"{prefix}_acc": acc,
-                f"{prefix}_iou": iou,
-            }
-        )
-
     def loss(self, preds, labels, alpha=0.0001):
         outputs, m3x3, m64x64 = preds
         bs = outputs.size(0)
-        id3x3 = torch.eye(3, requires_grad=True).repeat(bs, 1, 1)
-        id64x64 = torch.eye(64, requires_grad=True).repeat(bs, 1, 1)
-        if outputs.is_cuda:
-            id3x3 = id3x3.cuda()
-            id64x64 = id64x64.cuda()
+        id3x3 = torch.eye(3, requires_grad=True).repeat(bs, 1, 1).to(outputs)
+        id64x64 = torch.eye(64, requires_grad=True).repeat(bs, 1, 1).to(outputs)
         diff3x3 = id3x3 - torch.bmm(m3x3, m3x3.transpose(1, 2))
         diff64x64 = id64x64 - torch.bmm(m64x64, m64x64.transpose(1, 2))
         return self.criterion(outputs, labels) + alpha * (
