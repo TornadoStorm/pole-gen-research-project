@@ -12,6 +12,6 @@ valid_data:
   split: 0.2
 
 train:
-  epochs: 100
+  epochs: 15
   path: data/pointnet
   best_model_path: data/pointnet/best_model.pth

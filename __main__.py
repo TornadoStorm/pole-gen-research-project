@@ -145,9 +145,8 @@ except FileNotFoundError:
         train_dataloaders=train_dataloader,
         val_dataloaders=valid_dataloader,
     )
-    trainer.test(model=segmenter, dataloaders=test_dataloader)
 
 # Testing
 
-trainer = L.Trainer(default_root_dir=data_path)
-trainer.test(model=segmenter, dataloaders=test_dataloader)
+test_trainer = L.Trainer(default_root_dir=data_path, devices=1)
+test_trainer.test(model=segmenter, dataloaders=test_dataloader)
