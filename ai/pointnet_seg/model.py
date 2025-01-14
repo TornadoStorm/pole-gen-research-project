@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from sklearn.metrics import jaccard_score
+from torchmetrics import F1Score
 
 
 # Multi Layer Perceptron
@@ -118,6 +119,7 @@ class PointNetSeg(L.LightningModule):
         self.conv = nn.Conv1d(128, n_classes, 1)
         self.logsoftmax = nn.LogSoftmax(dim=1)
         self.criterion = torch.nn.NLLLoss()
+        self.f1_score = F1Score(task='multiclass', num_classes=n_classes, average='macro')
         self.save_hyperparameters()
 
     def forward(self, input):
@@ -138,17 +140,21 @@ class PointNetSeg(L.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         input, labels = batch
-        preds = self(input)
-        self.log("val_loss", self.loss(preds, labels), sync_dist=True)
-        self.log("val_acc", self.accuracy(preds, labels), sync_dist=True)
-        self.log("val_iou", self.iou(preds, labels), sync_dist=True)
+        outputs = self(input)
+        preds, _, _ = outputs
+        self.log("val_loss", self.loss(outputs, labels), sync_dist=True)
+        self.log("val_f1", self.f1_score(preds.argmax(dim=1), labels), sync_dist=True)
+        # self.log("val_acc", self.accuracy(outputs, labels), sync_dist=True)
+        self.log("val_iou", self.iou(outputs, labels), sync_dist=True)
 
     def test_step(self, batch, batch_idx):
         input, labels = batch
-        preds = self(input)
-        self.log("test_loss", self.loss(preds, labels), sync_dist=True)
-        self.log("test_acc", self.accuracy(preds, labels), sync_dist=True)
-        self.log("test_iou", self.iou(preds, labels), sync_dist=True)
+        outputs = self(input)
+        preds, _, _ = outputs
+        self.log("val_loss", self.loss(outputs, labels), sync_dist=True)
+        self.log("val_f1", self.f1_score(preds.argmax(dim=1), labels), sync_dist=True)
+        # self.log("val_acc", self.accuracy(preds, labels), sync_dist=True)
+        self.log("val_iou", self.iou(outputs, labels), sync_dist=True)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=0.001)

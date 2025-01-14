@@ -30,11 +30,14 @@ def plot_open3d(geometry_list: List):
     fig.show()
 
 
-def plot_cloud(
+def point_cloud_figure(
     cloud: o3d.t.geometry.PointCloud,
     xaxis: List[float] = [-10, 10],
     yaxis: List[float] = [-10, 10],
     zaxis: List[float] = [0, 20],
+    title: str | None = None,
+    cmin = 0.0,
+    cmax = 8.0,
 ):
     class_names = [label.name for label in UtilityPoleLabel]
     points = cloud.point.positions.numpy()
@@ -52,6 +55,8 @@ def plot_cloud(
             ),
             colorscale="Rainbow",
             opacity=0.8,
+            cmin=cmin,
+            cmax=cmax,
             colorbar=(
                 dict(
                     title="Class",
@@ -72,6 +77,7 @@ def plot_cloud(
         template="plotly_dark",
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
+        title=title,
     )
     fig.update_scenes(
         xaxis=dict(range=xaxis, autorange=False),
@@ -79,7 +85,7 @@ def plot_cloud(
         zaxis=dict(range=zaxis, autorange=False),
         aspectmode="cube",
     )
-    fig.show()
+    return fig
 
 
 def plot_history(history: pd.DataFrame):

@@ -14,4 +14,4 @@ valid_data:
 train:
   epochs: 15
   path: data/pointnet
-  best_model_path: data/pointnet/best_model.pth
+  best_model_path: data/pointnet/best_model.ckpt

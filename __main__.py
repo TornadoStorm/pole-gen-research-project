@@ -5,6 +5,7 @@ import warnings
 import numpy as np
 import pytorch_lightning as L
 import torch
+from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.utils.data import DataLoader
 
 from ai.pointnet_seg.model import PointNetSeg
@@ -121,24 +122,26 @@ print(f"Validation dataset size: {len(valid_dataset)}")
 # Trainiing
 
 data_path = "data/pointnet"
-model_fname = "bestmodel"
-log_fname = "log.csv"
-
-segmenter = PointNetSeg(n_classes=N_CLASSES)
-
-model_path = os.path.join(data_path, model_fname)
-log_path = os.path.join(data_path, log_fname)
 
 try:
-    segmenter.load_state_dict(torch.load(f"{model_path}.pth"))
+    segmenter = PointNetSeg.load_from_checkpoint(TRAIN_BEST_MODEL_PATH)
     print("Model loaded")
 except FileNotFoundError:
     print("Training new model...")
-    os.makedirs(os.path.dirname(model_path), exist_ok=True)
+    segmenter = PointNetSeg(n_classes=N_CLASSES)
+    os.makedirs(data_path, exist_ok=True)
     trainer = L.Trainer(
         # fast_dev_run=True,
         max_epochs=15,
         default_root_dir=data_path,
+        callbacks=[
+            ModelCheckpoint(
+                monitor="val_loss",
+                mode="min",
+                dirpath=os.path.join(data_path, "checkpoints"),
+                filename="{epoch:02d}-{val_loss:.2f}",
+            )
+        ],
     )
     trainer.fit(
         model=segmenter,
