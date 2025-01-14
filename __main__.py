@@ -51,8 +51,9 @@ if not os.path.exists(TRAIN_DATA_PATH) or len(os.listdir(TRAIN_DATA_PATH)) == 0:
 else:
     print("Data directory found. Using existing training data.")
 
+file_paths = [os.path.join(TRAIN_DATA_PATH, f) for f in os.listdir(TRAIN_DATA_PATH)]
 train_dataset = PointCloudDataset(
-    file_paths=[os.path.join(TRAIN_DATA_PATH, f) for f in os.listdir(TRAIN_DATA_PATH)],
+    file_paths=file_paths,
     n_points=N_POINTS,
     n_classes=N_CLASSES,
 )
@@ -69,7 +70,7 @@ if needs_validation:
 
 print(f"Training dataset size: {len(train_dataset)}")
 
-# Load testing & validation data
+# Testing & validation data
 
 needs_validation = False
 if not os.path.exists(TEST_DATA_PATH) or len(os.listdir(TEST_DATA_PATH)) == 0:
@@ -117,20 +118,27 @@ del real_data
 print(f"Testing dataset size: {len(test_dataset)}")
 print(f"Validation dataset size: {len(valid_dataset)}")
 
-# Training
+# Trainiing
+
+data_path = "data/pointnet"
+model_fname = "bestmodel"
+log_fname = "log.csv"
 
 segmenter = PointNetSeg(n_classes=N_CLASSES)
 
+model_path = os.path.join(data_path, model_fname)
+log_path = os.path.join(data_path, log_fname)
+
 try:
-    segmenter.load_state_dict(torch.load(TRAIN_BEST_MODEL_PATH))
+    segmenter.load_state_dict(torch.load(f"{model_path}.pth"))
     print("Model loaded")
 except FileNotFoundError:
     print("Training new model...")
-    os.makedirs(TRAIN_PATH, exist_ok=True)
+    os.makedirs(os.path.dirname(model_path), exist_ok=True)
     trainer = L.Trainer(
         # fast_dev_run=True,
-        max_epochs=TRAIN_EPOCHS,
-        default_root_dir=TRAIN_PATH,
+        max_epochs=15,
+        default_root_dir=data_path,
     )
     trainer.fit(
         model=segmenter,
@@ -141,5 +149,5 @@ except FileNotFoundError:
 
 # Testing
 
-trainer = L.Trainer(default_root_dir=TRAIN_PATH)
+trainer = L.Trainer(default_root_dir=data_path)
 trainer.test(model=segmenter, dataloaders=test_dataloader)

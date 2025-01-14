@@ -139,16 +139,16 @@ class PointNetSeg(L.LightningModule):
     def validation_step(self, batch, batch_idx):
         input, labels = batch
         preds = self(input)
-        self.log("val_loss", self.loss(preds, labels))
-        self.log("val_acc", self.accuracy(preds, labels))
-        self.log("val_iou", self.iou(preds, labels))
+        self.log("val_loss", self.loss(preds, labels), sync_dist=True)
+        self.log("val_acc", self.accuracy(preds, labels), sync_dist=True)
+        self.log("val_iou", self.iou(preds, labels), sync_dist=True)
 
     def test_step(self, batch, batch_idx):
         input, labels = batch
         preds = self(input)
-        self.log("test_loss", self.loss(preds, labels))
-        self.log("test_acc", self.accuracy(preds, labels))
-        self.log("test_iou", self.iou(preds, labels))
+        self.log("test_loss", self.loss(preds, labels), sync_dist=True)
+        self.log("test_acc", self.accuracy(preds, labels), sync_dist=True)
+        self.log("test_iou", self.iou(preds, labels), sync_dist=True)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
