@@ -4,7 +4,12 @@ import yaml
 from dotenv import load_dotenv
 from segments import SegmentsClient
 
+from pole_gen.models import UtilityPoleLabel
+
 load_dotenv()
+
+CLASSES: list = [l.name for l in UtilityPoleLabel]
+N_CLASSES: int = len(CLASSES)
 
 SEGMENTS_CLIENT = SegmentsClient(os.getenv("SEGMENTS_AI_API_KEY"))
 
@@ -19,6 +24,7 @@ TRAIN_DATA_SIZE: int = ts.get("size", 65536)
 TRAIN_DATA_PATH: str = ts.get("path", "data/train")
 TRAIN_DATA_BATCH_SIZE: int = ts.get("batch_size", 32)
 TRAIN_DATA_WORKERS: int = ts.get("workers", 4)
+TRAIN_DATA_JITTER:float = ts.get("jitter", 0.02)
 
 ts = config.get("test_data", {})
 TEST_DATA_PATH: str = ts.get("path", "data/test")

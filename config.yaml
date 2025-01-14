@@ -4,6 +4,7 @@ seed: 42
 train_data:
   size: 65536
   path: data/train
+  jitter: 0.02
 
 test_data:
   path: data/test

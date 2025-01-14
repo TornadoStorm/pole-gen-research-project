@@ -12,12 +12,9 @@ from ai.pointnet_seg.model import PointNetSeg
 from electrical_poles.data import download_data
 from models.dataset import PointCloudDataset
 from pole_gen.data import generate_data
-from pole_gen.models import UtilityPoleLabel
 from utils.config import *
 from utils.logging import warning_format
 
-CLASSES: list = [l.name for l in UtilityPoleLabel]
-N_CLASSES: int = len(CLASSES)
 torch.set_float32_matmul_precision("medium")
 
 warnings.formatwarning = warning_format
