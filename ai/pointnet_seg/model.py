@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from sklearn.metrics import jaccard_score
-from torchmetrics import F1Score
+from torchmetrics import F1Score, JaccardIndex
 
 
 # Multi Layer Perceptron
@@ -119,7 +119,10 @@ class PointNetSeg(L.LightningModule):
         self.conv = nn.Conv1d(128, n_classes, 1)
         self.logsoftmax = nn.LogSoftmax(dim=1)
         self.criterion = torch.nn.NLLLoss()
-        self.f1_score = F1Score(task='multiclass', num_classes=n_classes, average='macro')
+        self.f1_score = F1Score(
+            task="multiclass", num_classes=n_classes, average="macro"
+        )
+        self.iou = JaccardIndex(task="multiclass", num_classes=n_classes)
         self.save_hyperparameters()
 
     def forward(self, input):
@@ -140,21 +143,11 @@ class PointNetSeg(L.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         input, labels = batch
-        outputs = self(input)
-        preds, _, _ = outputs
-        self.log("val_loss", self.loss(outputs, labels), sync_dist=True)
-        self.log("val_f1", self.f1_score(preds.argmax(dim=1), labels), sync_dist=True)
-        # self.log("val_acc", self.accuracy(outputs, labels), sync_dist=True)
-        self.log("val_iou", self.iou(outputs, labels), sync_dist=True)
+        self.log_stats(self(input), labels, "val")
 
     def test_step(self, batch, batch_idx):
         input, labels = batch
-        outputs = self(input)
-        preds, _, _ = outputs
-        self.log("val_loss", self.loss(outputs, labels), sync_dist=True)
-        self.log("val_f1", self.f1_score(preds.argmax(dim=1), labels), sync_dist=True)
-        # self.log("val_acc", self.accuracy(preds, labels), sync_dist=True)
-        self.log("val_iou", self.iou(outputs, labels), sync_dist=True)
+        self.log_stats(self(input), labels, "test")
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
@@ -176,13 +169,25 @@ class PointNetSeg(L.LightningModule):
         ) / float(bs)
 
     def accuracy(self, preds, labels):
-        outputs, _, _ = preds
-        preds = outputs.argmax(dim=1).cpu().numpy()
+        preds = preds.argmax(dim=1).cpu().numpy()
         labels = labels.cpu().numpy()
         return (preds == labels).mean()
 
-    def iou(self, preds, labels):
+    def log_stats(self, preds, labels, prefix):
         outputs, _, _ = preds
-        preds = outputs.argmax(dim=1).cpu().numpy()
-        labels = labels.cpu().numpy()
-        return jaccard_score(preds.flatten(), labels.flatten(), average="macro")
+        self.log(f"{prefix}_loss", self.loss(preds, labels), sync_dist=True)
+        self.log(
+            f"{prefix}_f1",
+            self.f1_score(outputs, labels),
+            sync_dist=True,
+            on_epoch=True,
+        )
+        self.log(
+            f"{prefix}_acc",
+            self.accuracy(outputs, labels),
+            sync_dist=True,
+            on_epoch=True,
+        )
+        self.log(
+            f"{prefix}_iou", self.iou(outputs, labels), sync_dist=True, on_epoch=True
+        )

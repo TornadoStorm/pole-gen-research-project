@@ -127,6 +127,7 @@ except FileNotFoundError:
     print("Training new model...")
     segmenter = PointNetSeg(n_classes=N_CLASSES)
     os.makedirs(data_path, exist_ok=True)
+    os.makedirs(os.path.join(data_path, "lightning_logs"), exist_ok=True)
     trainer = L.Trainer(
         # fast_dev_run=True,
         max_epochs=15,
