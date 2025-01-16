@@ -1,11 +1,6 @@
-# Requirements as specified by Open3D for its ML pipeline
--f https://download.pytorch.org/whl/torch/
-torch==2.0.1+cu117
--f https://download.pytorch.org/whl/torchvision/
-torchvision==0.15.2+cu117
-tensorboard
-torch-tb-profiler
-# Other requirements
+torch
+torchvision
+torchaudio
 tqdm
 numpy
 pandas
@@ -16,3 +11,4 @@ plotly
 segments-ai
 python-dotenv
 lightning
+mlflow

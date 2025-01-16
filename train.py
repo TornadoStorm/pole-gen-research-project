@@ -5,7 +5,7 @@ import warnings
 import numpy as np
 import pytorch_lightning as L
 import torch
-from pytorch_lightning.callbacks import ModelCheckpoint
+from lightning.pytorch.loggers import MLFlowLogger
 from torch.utils.data import DataLoader
 
 from ai.pointnet_seg.model import PointNetSeg
@@ -16,6 +16,12 @@ from utils.config import *
 from utils.logging import warning_format
 
 torch.set_float32_matmul_precision("medium")
+
+# Odd workaround to fix the cuda not initialized error
+torch.cuda.empty_cache()
+s = 32
+dev = torch.device('cuda')
+torch.nn.functional.conv2d(torch.zeros(s, s, s, s, device=dev), torch.zeros(s, s, s, s, device=dev))
 
 warnings.formatwarning = warning_format
 
@@ -116,38 +122,25 @@ del real_data
 print(f"Testing dataset size: {len(test_dataset)}")
 print(f"Validation dataset size: {len(valid_dataset)}")
 
-# Trainiing
+# Training
 
-data_path = "data/pointnet"
-
-try:
-    segmenter = PointNetSeg.load_from_checkpoint(TRAIN_BEST_MODEL_PATH)
-    print("Model loaded")
-except FileNotFoundError:
-    print("Training new model...")
-    segmenter = PointNetSeg(n_classes=N_CLASSES)
-    os.makedirs(data_path, exist_ok=True)
-    os.makedirs(os.path.join(data_path, "lightning_logs"), exist_ok=True)
-    trainer = L.Trainer(
-        # fast_dev_run=True,
-        max_epochs=15,
-        default_root_dir=data_path,
-        callbacks=[
-            ModelCheckpoint(
-                monitor="val_loss",
-                mode="min",
-                dirpath=os.path.join(data_path, "checkpoints"),
-                filename="{epoch:02d}-{val_loss:.2f}",
-            )
-        ],
-    )
-    trainer.fit(
-        model=segmenter,
-        train_dataloaders=train_dataloader,
-        val_dataloaders=valid_dataloader,
-    )
+segmenter = PointNetSeg(n_classes=N_CLASSES)
+trainer = L.Trainer(
+    max_epochs=15,
+    precision="16-mixed",
+    accumulate_grad_batches=2,
+    logger=MLFlowLogger(
+        experiment_name="PointNetSeg",
+        log_model="all",
+    ),
+)
+trainer.fit(
+    model=segmenter,
+    train_dataloaders=train_dataloader,
+    val_dataloaders=valid_dataloader,
+)
 
 # Testing
 
-test_trainer = L.Trainer(default_root_dir=data_path, devices=1)
+test_trainer = L.Trainer(devices=1)
 test_trainer.test(model=segmenter, dataloaders=test_dataloader)
