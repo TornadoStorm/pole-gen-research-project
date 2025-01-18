@@ -11,6 +11,15 @@ from pole_gen.models import UtilityPoleLabel
 
 def plot_open3d(geometry_list: List):
     fig = get_plotly_fig(geometry_list, mesh_show_wireframe=True)
+    layout = go.Layout(
+        scene=dict(
+            xaxis=dict(title="X", showgrid=False, zeroline=False, showbackground=False),
+            yaxis=dict(title="Y", showgrid=False, zeroline=False, showbackground=False),
+            zaxis=dict(title="Z", showgrid=False, zeroline=False, showbackground=False),
+        ),
+        margin=dict(r=0, l=0, b=0, t=0),
+    )
+    fig.update_layout(layout)
     fig.update_layout(
         template="plotly_dark",
         plot_bgcolor="rgba(0,0,0,0)",
@@ -36,8 +45,8 @@ def point_cloud_figure(
     yaxis: List[float] = [-10, 10],
     zaxis: List[float] = [0, 20],
     title: str | None = None,
-    cmin = 0.0,
-    cmax = 8.0,
+    cmin=0.0,
+    cmax=8.0,
 ):
     class_names = [label.name for label in UtilityPoleLabel]
     points = cloud.point.positions.numpy()
@@ -69,7 +78,11 @@ def point_cloud_figure(
         ),
     )
     layout = go.Layout(
-        scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z"),
+        scene=dict(
+            xaxis=dict(title="X", showgrid=False, zeroline=False, showbackground=False),
+            yaxis=dict(title="Y", showgrid=False, zeroline=False, showbackground=False),
+            zaxis=dict(title="Z", showgrid=False, zeroline=False, showbackground=False),
+        ),
         margin=dict(r=0, l=0, b=0, t=0),
     )
     fig = go.Figure(data=[scatter], layout=layout)
