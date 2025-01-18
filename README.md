@@ -22,4 +22,4 @@ Look into config.yaml for any settings you may want to change before using this 
 
 - [PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation](https://doi.org/10.48550/arXiv.1612.00593)
 
-- [3DP-Point-Cloud-Segmentation](https://github.com/sepideh-shamsizadeh/3DP-Point-Cloud-Segmentation/tree/main)
+- [3DP-Point-Cloud-Segmentation](https://github.com/sepideh-shamsizadeh/3DP-Point-Cloud-Segmentation)
