@@ -3,7 +3,6 @@ import pytorch_lightning as L
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from sklearn.metrics import jaccard_score
 from torchmetrics import F1Score, JaccardIndex
 
 
@@ -180,14 +179,10 @@ class PointNetSeg(L.LightningModule):
             f"{prefix}_f1",
             self.f1_score(outputs, labels),
             sync_dist=True,
-            on_epoch=True,
         )
         self.log(
             f"{prefix}_acc",
             self.accuracy(outputs, labels),
             sync_dist=True,
-            on_epoch=True,
         )
-        self.log(
-            f"{prefix}_iou", self.iou(outputs, labels), sync_dist=True, on_epoch=True
-        )
+        self.log(f"{prefix}_iou", self.iou(outputs, labels), sync_dist=True)

@@ -20,8 +20,10 @@ torch.set_float32_matmul_precision("medium")
 # Odd workaround to fix the cuda not initialized error
 torch.cuda.empty_cache()
 s = 32
-dev = torch.device('cuda')
-torch.nn.functional.conv2d(torch.zeros(s, s, s, s, device=dev), torch.zeros(s, s, s, s, device=dev))
+dev = torch.device("cuda")
+torch.nn.functional.conv2d(
+    torch.zeros(s, s, s, s, device=dev), torch.zeros(s, s, s, s, device=dev)
+)
 
 warnings.formatwarning = warning_format
 
@@ -131,7 +133,7 @@ trainer = L.Trainer(
     accumulate_grad_batches=2,
     logger=MLFlowLogger(
         experiment_name="PointNetSeg",
-        log_model="all",
+        log_model=True,
     ),
 )
 trainer.fit(
