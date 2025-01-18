@@ -48,16 +48,15 @@ TRAIN_DATA_SIZE = args.size
 TRAIN_DATA_PATH = args.dir
 SEED = args.seed
 
-needs_validation = False
 if not os.path.exists(TRAIN_DATA_PATH) or len(os.listdir(TRAIN_DATA_PATH)) == 0:
     print("Directory is empty or does not exist. New testing data will be generated.")
+    print(f"Generating {TRAIN_DATA_SIZE} samples with {N_POINTS} points each.")
     generate_data(
         n_samples=TRAIN_DATA_SIZE,
         n_points=N_POINTS,
         out_dir=TRAIN_DATA_PATH,
         jitter=TRAIN_DATA_JITTER,
     )
-    needs_validation = True
 else:
     print("Data directory found. Using existing training data.")
 
@@ -74,8 +73,5 @@ train_dataloader = DataLoader(
     num_workers=TRAIN_DATA_WORKERS,
     persistent_workers=True,
 )
-
-if needs_validation:
-    train_dataset.validate()
 
 print(f"Training dataset size: {len(train_dataset)}")
