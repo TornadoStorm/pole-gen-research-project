@@ -2,6 +2,8 @@
 
 A workflow for generating synthetic datasets for use in semantically segmenting utility poles.
 
+<!-- TODO Citation -->
+
 ## Setup
 
 This tool was written and tested using _Python 3.10_ and _Python 3.12_.
