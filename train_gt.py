@@ -15,6 +15,8 @@ from pole_gen.data import generate_data
 from utils.config import *
 from utils.logging import warning_format
 
+# This is to train the model using the ground truth data, for comparison purposes
+
 torch.set_float32_matmul_precision("medium")
 
 # Odd workaround to fix the cuda not initialized error
@@ -42,41 +44,7 @@ if torch.cuda.is_available():
     torch.cuda.manual_seed_all(SEED)
 print(f"Seed: {SEED}")
 
-# Load training data
-
-needs_validation = False
-if not os.path.exists(TRAIN_DATA_PATH) or len(os.listdir(TRAIN_DATA_PATH)) == 0:
-    print("Directory is empty or does not exist. New testing data will be generated.")
-    generate_data(
-        n_samples=TRAIN_DATA_SIZE,
-        n_points=N_POINTS,
-        out_dir=TRAIN_DATA_PATH,
-        jitter=0.02,
-    )
-    needs_validation = True
-else:
-    print("Data directory found. Using existing training data.")
-
-file_paths = [os.path.join(TRAIN_DATA_PATH, f) for f in os.listdir(TRAIN_DATA_PATH)]
-train_dataset = PointCloudDataset(
-    file_paths=file_paths,
-    n_points=N_POINTS,
-    n_classes=N_CLASSES,
-)
-train_dataloader = DataLoader(
-    train_dataset,
-    batch_size=TRAIN_DATA_BATCH_SIZE,
-    shuffle=True,
-    num_workers=TRAIN_DATA_WORKERS,
-    persistent_workers=True,
-)
-
-if needs_validation:
-    train_dataset.validate()
-
-print(f"Training dataset size: {len(train_dataset)}")
-
-# Testing & validation data
+# Training, Testing & Validation data
 
 needs_validation = False
 if not os.path.exists(TEST_DATA_PATH) or len(os.listdir(TEST_DATA_PATH)) == 0:
@@ -97,10 +65,23 @@ real_data = PointCloudDataset(
 if needs_validation:
     real_data.validate()
 
-# Split the real data into test and validation datasets
-valid_size = int(VALID_DATA_SPLIT * len(real_data))
-test_dataset, valid_dataset = torch.utils.data.random_split(
-    real_data, [len(real_data) - valid_size, valid_size]
+# Split our data accordingly
+splits = [0.7, 0.2, 0.1]  # Train, test, validation splits
+l = len(real_data)
+splits = [int(l * s) for s in splits]
+splits[-1] = l - sum(
+    splits[:-1]
+)  # Ensure the sum of the splits is equal to the length of the dataset
+train_dataset, test_dataset, valid_dataset = torch.utils.data.random_split(
+    real_data, splits
+)
+
+train_dataloader = DataLoader(
+    train_dataset,
+    batch_size=TRAIN_DATA_BATCH_SIZE,
+    shuffle=True,
+    num_workers=TRAIN_DATA_WORKERS,
+    persistent_workers=True,
 )
 
 test_dataloader = DataLoader(
@@ -120,7 +101,10 @@ valid_dataloader = DataLoader(
 )
 
 del real_data
+del l
+del splits
 
+print(f"Training dataset size: {len(train_dataset)}")
 print(f"Testing dataset size: {len(test_dataset)}")
 print(f"Validation dataset size: {len(valid_dataset)}")
 
@@ -132,7 +116,7 @@ trainer = L.Trainer(
     precision="16-mixed",
     accumulate_grad_batches=2,
     logger=MLFlowLogger(
-        experiment_name="PointNetSeg_Synthetic",
+        experiment_name="PointNetSeg_GT",
         log_model=True,
     ),
 )

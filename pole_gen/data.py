@@ -30,7 +30,7 @@ def generate_data(
 
     sample_id = 0  # For filename
 
-    for _ in trange(n_samples, desc="Generating training data"):
+    for _ in trange(n_samples, desc="Generating utility poles"):
         state = generate_utility_pole_mesh()
         r = np.random.uniform(min_scanner_distance, max_scanner_distance)
         a = np.random.uniform(0, 2 * np.pi)

@@ -3,6 +3,7 @@ from typing import List
 
 import open3d as o3d
 import pandas as pd
+import plotly.express as px
 import plotly.graph_objects as go
 from open3d.visualization.draw_plotly import get_plotly_fig  # type: ignore
 
@@ -62,7 +63,7 @@ def point_cloud_figure(
                 if "labels" in cloud.point
                 else points[:, 2]
             ),
-            colorscale="Rainbow",
+            colorscale=px.colors.qualitative.Bold,
             opacity=0.8,
             cmin=cmin,
             cmax=cmax,
