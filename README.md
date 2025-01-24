@@ -8,17 +8,15 @@ A workflow for generating synthetic datasets for use in semantically segmenting 
 
 This tool was written and tested using _Python 3.10_ and _Python 3.12_.
 
-Create a python environment and install all dependencies listed in the requirements.txt. You can do this with one command via `pip install -U -r requirements.txt`.
+Create a python environment and install all dependencies listed in the requirements.txt. You install these dependencies via `pip install -U -r requirements.txt`.
 
-Create a .env file in this project's root directory containing an entry `SEGMENTS_AI_API_KEY={Your Segments.ai API key}`. This is needed to fetch and preprocess the ground truth data.
-
-Look into config.yaml for any settings you may want to change before using this project.
+Look into config.yaml for any settings you may want to change before using this project. You may additionally look into utils/config.py to see each setting's default value as well as other settings you may want to use.
 
 ## Usage
 
-- To quickly see the utility pole generator in action, take a look at _pole_gen_demo.ipynb_.
-- To perform a full training and testing process using a **PointNet** model, run _train.py_. Take a look at utils/config.py and the config.yaml.
-- To perform the same as above in a Jupyter notebook environment, you may look at _notebook.ipynb_, however take note that multiprocessing was not implemented there and training your AI model might be slower!
+- To quickly see the utility pole generator in action, take a look at **demo_pole_gen.ipynb**.
+- To perform a full training and testing process using a PointNet model, run **train.py**. See utils/config.py and the config.yaml for settings to use.
+- See **demo_segmentation.ipynb** For an interactive demonstration of your PointNet model trained with **train.py**.
 
 ## References
 

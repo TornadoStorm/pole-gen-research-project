@@ -15,4 +15,4 @@ valid_data:
 train:
   epochs: 15
   path: data/pointnet
-  best_model_path: mlruns/358861021519665424/c0d7eb90a98347a69e4be684aef45a69/artifacts/epoch=14-step=7680/epoch=14-step=7680.ckpt
+  best_model_path: ai/pointnet_seg/best_model.ckpt

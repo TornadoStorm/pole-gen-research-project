@@ -9,11 +9,11 @@ from lightning.pytorch.loggers import MLFlowLogger
 from torch.utils.data import DataLoader
 
 from ai.pointnet_seg.model import PointNetSeg
-from electrical_poles.data import download_data
 from models.dataset import PointCloudDataset
 from pole_gen.data import generate_data
 from utils.config import *
 from utils.logging import warning_format
+from utils.sample_pcd import sample_pcd_files
 
 torch.set_float32_matmul_precision("medium")
 
@@ -83,7 +83,7 @@ if not os.path.exists(TEST_DATA_PATH) or len(os.listdir(TEST_DATA_PATH)) == 0:
     print(
         "Testing data directory is empty or does not exist. New testing data will be downloaded."
     )
-    download_data(out_dir=TEST_DATA_PATH, n_points=N_POINTS)
+    sample_pcd_files("gt_data", TEST_DATA_PATH, N_POINTS)
     needs_validation = True
 else:
     print("Testing data directory found. Using existing testing data.")

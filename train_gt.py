@@ -1,3 +1,6 @@
+# This code is not functional as it is. It was used to train a model using only the ground truth data for comparison.
+# I left this code here for reference purposes.
+
 import os
 import random
 import warnings
@@ -5,11 +8,11 @@ import warnings
 import numpy as np
 import pytorch_lightning as L
 import torch
+from electrical_poles.data import download_data
 from lightning.pytorch.loggers import MLFlowLogger
 from torch.utils.data import DataLoader
 
 from ai.pointnet_seg.model import PointNetSeg
-from electrical_poles.data import download_data
 from models.dataset import PointCloudDataset
 from pole_gen.data import generate_data
 from utils.config import *
