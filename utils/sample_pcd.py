@@ -7,8 +7,10 @@ from tqdm.auto import tqdm
 
 # Little tool to sample pcd files with a specified number of points and save them over to a new directory.
 def sample_pcd_files(src_dir: str, out_dir: str, n_points: int):
-    files = os.path.listdir(src_dir)
+    files = os.listdir(src_dir)
     files = [f for f in files if f.endswith(".pcd")]
+
+    os.makedirs(out_dir, exist_ok=True)
 
     for f in tqdm(files, desc="Sampling pcd files"):
         pc = o3d.t.io.read_point_cloud(os.path.join(src_dir, f))
